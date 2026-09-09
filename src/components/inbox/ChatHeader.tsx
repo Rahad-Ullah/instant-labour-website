@@ -20,12 +20,14 @@ interface ChatHeaderProps {
   selectedChat: any;
   chatList: any[]; // Needed for mobile sidebar
   onChatClick: (chat: any) => void;
+  activeUserId?: string | null;
 }
 
 const ChatHeader = ({
   selectedChat,
   chatList,
   onChatClick,
+  activeUserId,
 }: ChatHeaderProps) => {
   const [openMessageMenu, setOpenMessageMenu] = useState(false);
 
@@ -67,6 +69,7 @@ const ChatHeader = ({
                     onChatClick(chat);
                     setOpenMessageMenu(false);
                   }}
+                  activeUserId={activeUserId}
                   className="h-full border-0 !rounded-none shadow-none"
                 />
               </div>
@@ -85,7 +88,7 @@ const ChatHeader = ({
           />
           <div>
             <h3 className="font-bold text-gray-800 text-sm md:text-base leading-tight">
-              {selectedChat?.participant?.name}
+              {selectedChat?.participant?.name || "User"}
             </h3>
           </div>
         </div>

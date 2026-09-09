@@ -19,14 +19,22 @@ import { io, Socket } from "socket.io-client";
 // const SOCKET_URL = "http://10.10.7.50:5002/";
 // const SOCKET_URL = "https://api.instantlabour.co.uk/";
 
-const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any }) => {
+const InboxClient = ({
+  chatList,
+  singleChat,
+  currentUser,
+}: {
+  chatList: any;
+  singleChat?: any;
+  currentUser?: any;
+}) => {
   const [clickedChat, setClickedChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [isMsgLoading, setIsMsgLoading] = useState<boolean>(false);
   
   // Real-time state
   const [dynamicChatList, setDynamicChatList] = useState<any[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(currentUser?._id || null);
   const socketRef = useRef<Socket | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
   
@@ -46,6 +54,7 @@ const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any
 
   // 1. Fetch User ID
   useEffect(() => {
+    if (userId) return;
     const getProfile = async () => {
       try {
         const res = await myFetch("/user/profile", { method: "GET" });
@@ -57,7 +66,7 @@ const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any
       }
     };
     getProfile();
-  }, []);
+  }, [userId]);
 
   // 2. Socket Connection & Listeners
   useEffect(() => {
@@ -134,16 +143,71 @@ const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any
     };
   }, [userId]);
 
+  // Helper to ensure the participant is the other party, not the logged-in user
+  const resolveChatParticipant = (chat: any) => {
+    if (!chat) return chat;
+    const currentId = userId || currentUser?._id;
+
+    const isCurrent = (p: any) => {
+      if (!p) return false;
+      const pid = (p._id || p)?.toString();
+      return (
+        (currentId && pid === currentId.toString()) ||
+        (currentUser?.name && p?.name === currentUser.name)
+      );
+    };
+
+    // 1. Check if dynamicChatList or chatList has this chat with a valid other participant
+    const chatFromList =
+      dynamicChatList.find((c) => c._id === chat._id || c._ids === chat._id) ||
+      chatList?.data?.find((c: any) => c._id === chat._id || c._ids === chat._id);
+
+    if (chatFromList?.participant && !isCurrent(chatFromList.participant)) {
+      return {
+        ...chat,
+        ...chatFromList,
+        participant: chatFromList.participant,
+      };
+    }
+
+    let participant = chat.participant;
+
+    // 2. Check participants array
+    if (Array.isArray(chat.participants) && chat.participants.length > 0) {
+      const other = chat.participants.find((p: any) => !isCurrent(p));
+      if (other && typeof other === "object") {
+        if (!participant || isCurrent(participant)) {
+          participant = other;
+        }
+      }
+    }
+
+    // 3. Check worker or employer
+    if (isCurrent(participant)) {
+      if (chat.worker && !isCurrent(chat.worker)) {
+        participant = chat.worker;
+      } else if (chat.employer && !isCurrent(chat.employer)) {
+        participant = chat.employer;
+      }
+    }
+
+    return {
+      ...chat,
+      participant,
+    };
+  };
+
   // 3. Selection Handler
   const handleChatClick = async (item: any) => {
-    setClickedChat(item);
-    selectedChatIdRef.current = item._id; // Sync ref
+    const resolvedItem = resolveChatParticipant(item);
+    setClickedChat(resolvedItem);
+    selectedChatIdRef.current = resolvedItem._id; // Sync ref
     setMessages([]); // Clear previous messages immediately
     setIsMsgLoading(true);
 
     try {
       const res = await myFetch(
-        `/message/${item._ids || item._id}?limit=100`,
+        `/message/${resolvedItem._ids || resolvedItem._id}?limit=100`,
         {
           method: "GET",
         }
@@ -154,7 +218,7 @@ const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any
         // Mark sidebar chat as read locally
         setDynamicChatList((prev) =>
           prev.map((chat) => {
-            if (chat._id === item._id && chat.latestMessage) {
+            if (chat._id === resolvedItem._id && chat.latestMessage) {
               return {
                 ...chat,
                 latestMessage: { ...chat.latestMessage, isRead: true },
@@ -173,7 +237,8 @@ const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any
 
   useEffect(() => {
     if (singleChat && singleChat._id !== clickedChat?._id) {
-      handleChatClick(singleChat);
+      const chatToOpen = resolveChatParticipant(singleChat);
+      handleChatClick(chatToOpen);
 
       setDynamicChatList((prevList) => {
         const newList = [...prevList];
@@ -181,16 +246,16 @@ const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any
           (c) => c._id === singleChat._id
         );
         if (existingIndex !== -1) {
-          const updatedChat = { ...newList[existingIndex] };
-          // updatedChat.latestMessage = sentMessage;
+          const updatedChat = { ...newList[existingIndex], ...chatToOpen };
           newList.splice(existingIndex, 1);
           newList.unshift(updatedChat);
           return newList;
+        } else {
+          return [chatToOpen, ...newList];
         }
-        return prevList;
       });
     }
-  }, [])
+  }, [singleChat]);
 
   const handleSendMessage = async (text: string, images: File[]) => {
     if (!clickedChat) return;
@@ -250,11 +315,13 @@ const InboxClient = ({ chatList, singleChat }: { chatList: any, singleChat?: any
                 selectedChat={clickedChat}
                 chatList={dynamicChatList}
                 onChatClick={handleChatClick}
+                activeUserId={userId || currentUser?._id}
               />
               <MessageList
                 messages={messages}
                 isLoading={isMsgLoading}
                 clickedChat={clickedChat}
+                activeUserId={userId || currentUser?._id}
               />
               <ChatInput onSendMessage={handleSendMessage} />
             </>

@@ -8,13 +8,14 @@ import { useEffect, useRef } from "react";
 interface MessageListProps {
   messages: any[];
   isLoading: boolean;
-  activeUserId?: string; // To identify 'me' vs 'them' if we have active user ID, currently we infer from receiver
-  clickedChat: any; // Needed for current inference logic
+  activeUserId?: string | null;
+  clickedChat: any;
 }
 
 const MessageList = ({
   messages,
   isLoading,
+  activeUserId,
   clickedChat,
 }: MessageListProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -51,10 +52,11 @@ const MessageList = ({
         <div className="flex flex-col-reverse gap-4 min-h-full">
           <div ref={bottomRef} />
           {messages.map((item) => {
-            // Logic: If receiver ID == clickedChat participant ID, then I sent it.
-            // CAUTION: This logic depends on the assumption that 'clickedChat.participant' is the *other* person.
-            // If I am sender, receiver is them.
-            const isMe = item?.receiver?._id === clickedChat?.participant?._id;
+            // Logic: If activeUserId is provided, check if sender is active user.
+            // Fallback: If receiver ID == clickedChat participant ID, then I sent it.
+            const isMe = activeUserId
+              ? (item?.sender?._id || item?.sender)?.toString() === activeUserId.toString()
+              : item?.receiver?._id === clickedChat?.participant?._id;
 
             return (
               <div
@@ -67,8 +69,14 @@ const MessageList = ({
                 {!isMe && (
                   <div className="shrink-0 self-end mb-1">
                     <Image
-                      src={formatUrl(clickedChat?.participant?.profile)}
-                      alt="User"
+                      src={formatUrl(
+                        clickedChat?.participant?.profile ||
+                          (item?.sender?.profile &&
+                          (item?.sender?._id || item?.sender)?.toString() !== activeUserId?.toString()
+                            ? item.sender.profile
+                            : undefined)
+                      )}
+                      alt={clickedChat?.participant?.name || "User"}
                       width={28}
                       height={28}
                       className="size-7 rounded-full object-cover bg-gray-200"
