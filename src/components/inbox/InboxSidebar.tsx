@@ -38,7 +38,12 @@ const InboxSidebar = ({
     if (currentId === newId) return;
 
     onChatClick(item);
-    updateSearchParam("chat_id", newId);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("chat_id", newId);
+    params.delete("user_id");
+    params.delete("name");
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   useEffect(()=>{

@@ -2,7 +2,7 @@ import { myFetch } from "@/utils/myFetch";
 import InboxClient from "./InboxClient";
 
 const Inbox = async ({ searchParams }: { searchParams: any }) => {
-  const { chat_id, searchChat } = await searchParams;
+  const { chat_id, user_id, name, searchChat } = await searchParams;
   const queryParams = new URLSearchParams();
   if (searchChat) queryParams.set("searchTerm", searchChat);
 
@@ -28,11 +28,68 @@ const Inbox = async ({ searchParams }: { searchParams: any }) => {
     );
   };
 
-  let singleChat = null;
-  const validChatId = chat_id && chat_id !== "undefined" ? chat_id : null;
+  const matchesUser = (
+    c: any,
+    targetUserId?: string | null,
+    targetName?: string | null
+  ) => {
+    if (!c) return false;
 
-  if (validChatId) {
-    // 1. Try to find the chat in the chat list first (as GET /chat correctly formats the participant)
+    if (targetUserId) {
+      const tid = targetUserId.toString();
+      const pId = (c.participant?._id || c.participant)?.toString();
+      if (pId === tid) return true;
+
+      if (Array.isArray(c.participants)) {
+        if (
+          c.participants.some(
+            (p: any) => (p?._id || p)?.toString() === tid
+          )
+        ) {
+          return true;
+        }
+      }
+
+      const cEmpId = (c.employer?._id || c.employer)?.toString();
+      if (cEmpId === tid) return true;
+
+      const cWorkId = (c.worker?._id || c.worker)?.toString();
+      if (cWorkId === tid) return true;
+    }
+
+    if (targetName) {
+      const pName = c.participant?.name?.trim().toLowerCase();
+      if (pName && pName === targetName.trim().toLowerCase()) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  let singleChat = null;
+  const validChatId =
+    chat_id && chat_id !== "undefined" && chat_id !== "" ? chat_id : null;
+  const validUserId =
+    user_id && user_id !== "undefined" && user_id !== "" ? user_id : null;
+  const validName =
+    name && name !== "undefined" && name !== ""
+      ? decodeURIComponent(name)
+      : null;
+
+  // 1. If user_id or name is provided, search chat list for that specific user first
+  if (validUserId || validName) {
+    const foundByUser = getChatList?.data?.find((c: any) =>
+      matchesUser(c, validUserId, validName)
+    );
+    if (foundByUser) {
+      singleChat = { ...foundByUser };
+    }
+  }
+
+  // 2. If singleChat not yet found and validChatId is provided
+  if (!singleChat && validChatId) {
+    // Check if chat is in the list
     const foundInList = getChatList?.data?.find(
       (c: any) => c._id === validChatId || c._ids === validChatId
     );
@@ -47,25 +104,29 @@ const Inbox = async ({ searchParams }: { searchParams: any }) => {
         singleChat = { ...getChat.data };
       }
     }
+  }
 
-    if (singleChat) {
-      // If participants array exists, ensure participant is the other person
-      if (Array.isArray(singleChat.participants) && singleChat.participants.length > 0) {
-        const otherPerson = singleChat.participants.find((p: any) => !isCurrentUser(p));
-        if (otherPerson && typeof otherPerson === "object") {
-          if (!singleChat.participant || isCurrentUser(singleChat.participant)) {
-            singleChat.participant = otherPerson;
-          }
+  // 3. Ensure participant on singleChat is the OTHER person, not the current user
+  if (singleChat) {
+    if (
+      Array.isArray(singleChat.participants) &&
+      singleChat.participants.length > 0
+    ) {
+      const otherPerson = singleChat.participants.find(
+        (p: any) => !isCurrentUser(p)
+      );
+      if (otherPerson && typeof otherPerson === "object") {
+        if (!singleChat.participant || isCurrentUser(singleChat.participant)) {
+          singleChat.participant = otherPerson;
         }
       }
+    }
 
-      // If participant is still current user, check worker or employer
-      if (isCurrentUser(singleChat.participant)) {
-        if (singleChat.worker && !isCurrentUser(singleChat.worker)) {
-          singleChat.participant = singleChat.worker;
-        } else if (singleChat.employer && !isCurrentUser(singleChat.employer)) {
-          singleChat.participant = singleChat.employer;
-        }
+    if (isCurrentUser(singleChat.participant)) {
+      if (singleChat.worker && !isCurrentUser(singleChat.worker)) {
+        singleChat.participant = singleChat.worker;
+      } else if (singleChat.employer && !isCurrentUser(singleChat.employer)) {
+        singleChat.participant = singleChat.employer;
       }
     }
   }

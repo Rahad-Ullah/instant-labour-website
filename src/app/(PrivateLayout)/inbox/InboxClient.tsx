@@ -4,6 +4,7 @@
 import { myFetch } from "@/utils/myFetch";
 import { getCookie } from "cookies-next";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import InboxSidebar from "@/components/inbox/InboxSidebar";
 import ChatHeader from "@/components/inbox/ChatHeader";
 import MessageList from "@/components/inbox/MessageList";
@@ -28,6 +29,7 @@ const InboxClient = ({
   singleChat?: any;
   currentUser?: any;
 }) => {
+  const router = useRouter();
   const [clickedChat, setClickedChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [isMsgLoading, setIsMsgLoading] = useState<boolean>(false);
@@ -38,7 +40,7 @@ const InboxClient = ({
   const socketRef = useRef<Socket | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
   
-  const SOCKET_URL = process.env.NEXT_PUBLIC_IMAGE_URL
+  const SOCKET_URL = process.env.NEXT_PUBLIC_IMAGE_URL;
   useEffect(()=>{
     if(chatList?.data){
       const sortedList = [...chatList.data].sort((a, b) => {
@@ -98,9 +100,17 @@ const InboxClient = ({
     socket.on(`message::${userId}`, (newMessage: any) => {
       //console.log("New Socket Message:", newMessage);
 
+      const incomingChatId = (
+        newMessage?.chat?._id || newMessage?.chat
+      )?.toString();
+
       // A. Update Active Chat Window if open
       // Use ref to get the current selected chat ID without stale closures
-      if (selectedChatIdRef.current === newMessage.chat) {
+      if (
+        selectedChatIdRef.current &&
+        incomingChatId &&
+        selectedChatIdRef.current.toString() === incomingChatId
+      ) {
         setMessages((prev) => {
           // Prevent duplicates
           if (prev.some((m) => m._id === newMessage._id)) return prev;
@@ -112,7 +122,7 @@ const InboxClient = ({
       setDynamicChatList((prevList) => {
         const newList = [...prevList];
         const existingIndex = newList.findIndex(
-          (c) => c._id === newMessage.chat
+          (c) => (c._id || c._ids)?.toString() === incomingChatId
         );
 
         if (existingIndex !== -1) {
@@ -294,11 +304,26 @@ const InboxClient = ({
     }
   };
 
+  const handleBackToChatList = () => {
+    setClickedChat(null);
+    selectedChatIdRef.current = null;
+    const params = new URLSearchParams(window.location.search);
+    params.delete("chat_id");
+    params.delete("user_id");
+    params.delete("name");
+    const query = params.toString();
+    router.push(query ? `?${query}` : window.location.pathname, { scroll: false });
+  };
+
   return (
     <div className="maxWidth h-[calc(100vh-100px)] md:h-[calc(100vh-120px)] pb-4 md:pb-0">
       <div className="flex h-full gap-4 md:gap-6">
         {/* Sidebar */}
-        <div className="hidden md:block w-[320px] lg:w-95 shrink-0 h-full">
+        <div
+          className={`${
+            clickedChat ? "hidden md:block" : "w-full md:block"
+          } md:w-[320px] lg:w-95 shrink-0 h-full`}
+        >
           <InboxSidebar
             chatList={dynamicChatList}
             selectedChat={clickedChat}
@@ -308,7 +333,11 @@ const InboxClient = ({
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full relative">
+        <div
+          className={`${
+            clickedChat ? "flex flex-col" : "hidden md:flex md:flex-col"
+          } flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full relative`}
+        >
           {clickedChat ? (
             <>
               <ChatHeader
@@ -316,6 +345,7 @@ const InboxClient = ({
                 chatList={dynamicChatList}
                 onChatClick={handleChatClick}
                 activeUserId={userId || currentUser?._id}
+                onBack={handleBackToChatList}
               />
               <MessageList
                 messages={messages}
@@ -344,10 +374,6 @@ const InboxClient = ({
               <p className="text-gray-500 max-w-md mx-auto">
                 Select a conversation from the sidebar to continue chatting with
                 your contacts.
-              </p>
-
-              <p className="md:hidden text-primary mt-6 text-sm font-semibold">
-                Tap the menu icon in the sidebar to start
               </p>
             </div>
           )}

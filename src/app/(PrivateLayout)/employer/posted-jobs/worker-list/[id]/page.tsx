@@ -35,7 +35,7 @@ const ApproveAppliedWorkerDetails = async ({ searchParams, params }: { searchPar
 
       {/* ------------------- Contact & Review Button ------------------- */}
       {type === 'approved' && <div className='maxWidth mb-8 flex gap-4 items-center'>
-        <Link href={`/inbox?chat_id=${workerDetails?.chatId}`} className='border-2 border-brandClr2 bg-brandClr2 text-gray-800 font-semibold py-2 px-8 rounded-sm hover:bg-brandClr2/90 transition-colors duration-300'>Contact Now</Link>
+        <Link href={`/inbox?chat_id=${workerDetails?.chatId || ''}&user_id=${workerDetails?._id || id || ''}&name=${encodeURIComponent(workerDetails?.name || '')}`} className='border-2 border-brandClr2 bg-brandClr2 text-gray-800 font-semibold py-2 px-8 rounded-sm hover:bg-brandClr2/90 transition-colors duration-300'>Contact Now</Link>
         <CustomModal
           title="Feedback"
           trigger={<button className='border-2 border-blue-600 text-blue-600 font-semibold py-2 px-8 rounded-sm cursor-pointer hover:border-blue-700 transition-colors duration-300'>Feed Back</button>}

@@ -28,10 +28,21 @@ const BookMessageButtons = ({ workerDetails }: { workerDetails: any }) => {
     }
   }
 
+  const isApproved =
+    workerDetails?.bookingStatus?.toLowerCase() ===
+    BOOKING_STATUS?.APPROVED?.toLowerCase();
+  const isPending =
+    workerDetails?.bookingStatus?.toLowerCase() ===
+    BOOKING_STATUS?.PENDING?.toLowerCase();
+
   const handleMessage = () => {
     if (getUserRoleEmployer()) {
-      if (workerDetails?.bookingStatus === BOOKING_STATUS?.APPROVED) {
-        router.push("/inbox?chat_id=" + workerDetails?.chatId);
+      if (isApproved) {
+        const params = new URLSearchParams();
+        if (workerDetails?.chatId) params.set("chat_id", workerDetails.chatId);
+        if (workerDetails?._id) params.set("user_id", workerDetails._id);
+        if (workerDetails?.name) params.set("name", workerDetails.name);
+        router.push(`/inbox?${params.toString()}`);
       } else {
         toast.error("Booking not approved yet");
       }
@@ -45,13 +56,13 @@ const BookMessageButtons = ({ workerDetails }: { workerDetails: any }) => {
     <div className='maxWidth pb-8'>
       <div className='flex gap-2'>
         <div className=''>
-          <Button onClick={handleBooked} disabled={workerDetails?.isBooked || workerDetails?.bookingStatus === BOOKING_STATUS?.PENDING || workerDetails?.bookingStatus === BOOKING_STATUS?.APPROVED} variant="yelloBtn" className='w-full text-gray-700 rounded-sm'>Book Now</Button>
+          <Button onClick={handleBooked} disabled={workerDetails?.isBooked || isPending || isApproved} variant="yelloBtn" className='w-full text-gray-700 rounded-sm'>Book Now</Button>
         </div>
         <div className=''>
           <Button onClick={handleMessage} disabled={!workerDetails?.isBooked} variant="yelloBtn" className='w-full text-gray-600 rounded-sm'>Message</Button>
         </div>
       </div>
-      <p className='text-gray-500 pt-4'>{workerDetails?.bookingStatus === BOOKING_STATUS?.PENDING && "You have already sent a booking request to this worker. Please wait for the worker to approve your request."}</p>
+      <p className='text-gray-500 pt-4'>{isPending && "You have already sent a booking request to this worker. Please wait for the worker to approve your request."}</p>
     </div>
   )
 }

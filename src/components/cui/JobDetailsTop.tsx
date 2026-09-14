@@ -117,7 +117,7 @@ const JobDetailsTop = ({ jobDetails, hideApplyButton = false }: JobDetailsTopPro
             {/* -------------------Apply Now, Contact & Review Button ------------------- */}
             {!hideApplyButton && mounted && !isEmployer && (jobDetails.isApplied ? <div>
               {jobDetails.applicationStatus === APPLICATION_STATUS.APPROVED ? <div className='flex gap-4 items-center'>
-                <Link href={`/inbox?chat_id=${jobDetails?.chatId}`} className='border-2 border-brandClr2 bg-brandClr2 text-gray-800 font-semibold py-2 px-8 rounded-sm hover:bg-brandClr2/90 transition-colors duration-300'>Contact Now</Link>
+                <Link href={`/inbox?chat_id=${jobDetails?.chatId || ''}&user_id=${jobDetails?.createdBy?._id || ''}&name=${encodeURIComponent(jobDetails?.createdBy?.name || jobDetails?.companyName || '')}`} className='border-2 border-brandClr2 bg-brandClr2 text-gray-800 font-semibold py-2 px-8 rounded-sm hover:bg-brandClr2/90 transition-colors duration-300'>Contact Now</Link>
                 <CustomModal
                   title="Feedback"
                   trigger={<button className='border-2 border-blue-600 text-blue-600 font-semibold py-2 px-8 rounded-sm hover:border-blue-700 transition-colors duration-300 cursor-pointer'>Feed Back</button>}

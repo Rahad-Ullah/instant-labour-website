@@ -13,6 +13,7 @@ import { formatUrl } from "@/utils/formatUrl";
 import Image from "next/image";
 import { IoClose } from "react-icons/io5";
 import { TbMessageSearch } from "react-icons/tb";
+import { MdArrowBack } from "react-icons/md";
 import InboxSidebar from "./InboxSidebar";
 import { useState } from "react";
 
@@ -21,6 +22,7 @@ interface ChatHeaderProps {
   chatList: any[]; // Needed for mobile sidebar
   onChatClick: (chat: any) => void;
   activeUserId?: string | null;
+  onBack?: () => void;
 }
 
 const ChatHeader = ({
@@ -28,6 +30,7 @@ const ChatHeader = ({
   chatList,
   onChatClick,
   activeUserId,
+  onBack,
 }: ChatHeaderProps) => {
   const [openMessageMenu, setOpenMessageMenu] = useState(false);
 
@@ -35,13 +38,22 @@ const ChatHeader = ({
 
   return (
     <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 z-20 h-[72px]">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="md:hidden p-1.5 -ml-1 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            title="Back to conversations"
+          >
+            <MdArrowBack className="size-5" />
+          </button>
+        )}
         {/* Mobile Sidebar Trigger */}
         <div className="md:hidden">
           <Sheet open={openMessageMenu} onOpenChange={setOpenMessageMenu}>
             <SheetTrigger asChild>
-              <button className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-                <TbMessageSearch className="size-6" />
+              <button className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors" title="Search chats">
+                <TbMessageSearch className="size-5" />
               </button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[320px] p-0">
