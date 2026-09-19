@@ -1,50 +1,66 @@
+import React from "react";
+import Link from "next/link";
+import { LuUserX } from "react-icons/lu";
+import WorkerDetailsTop from "@/components/cui/WorkerDetailsTop";
+import WorkerDetailsBody from "@/components/cui/WorkerDetailsBody";
+import WorkerReviewsSection from "@/components/cui/WorkerReviewsSection";
+import BookMessageButtons from "@/components/actions/BookMessageButtons";
+import { myFetch } from "@/utils/myFetch";
 
-
-import React from 'react'
-import WorkerDetailsTop from '@/components/cui/WorkerDetailsTop';
-import WorkerDetailsBody from '@/components/cui/WorkerDetailsBody';
-// import { reviewDatas } from '@/data/reviewData';
-import ReviewCard from '@/components/card/ReviewCard';
-import { myFetch } from '@/utils/myFetch';
-import BookMessageButtons from '@/components/actions/BookMessageButtons';
-
-const SingleWorker = async ({ params }: { params: { id: string } }) => {
-  const { id } = await params;
-
-  const res = await myFetch(`/user/workers/${id}`);
-  
-  const resReview = await myFetch(`/review/${id}`);
-
-  const workerDetails = res?.data
-  // console.log("Get Worker Data : ", res);
-  
-  //console.log("Worker reviews : ", resReview?.data);
-
-
-  return (
-    <div className='maxWidth pt-4 pb-20'>
-
-      {/* ------------------- Worker Details Body ------------------- */}
-      <WorkerDetailsTop workerDetails={workerDetails} />
-
-      {/* ------------------- Book & Message Buttons ------------------- */}
-      <BookMessageButtons workerDetails={workerDetails} />
-
-      {/* ------------------- Worker Details Body ------------------- */}
-      <WorkerDetailsBody workerDetails={workerDetails} />
-
-      {/* --------------------- Rating list --------------------- */}
-      <div className='space-y-8 mt-12'>
-        <p className='py-2 px-3 border-2 border-blue-600 font-semibold text-blue-700 rounded-sm text-xl'>Reviews</p>
-        {resReview?.data?.map((item: any, index:number) => (
-          <div key={index} className=''>
-            <ReviewCard item={item} />
-          </div>
-        ))}
-      </div>
-
-    </div>
-  )
+interface SingleWorkerPageProps {
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default SingleWorker
+const SingleWorker = async ({ params }: SingleWorkerPageProps) => {
+  const { id } = await params;
+
+  const [resWorker, resReview] = await Promise.all([
+    myFetch(`/user/workers/${id}`),
+    myFetch(`/review/${id}`),
+  ]);
+
+  const workerDetails = resWorker?.data;
+  const reviews = resReview?.data || [];
+
+  if (!workerDetails) {
+    return (
+      <div className="maxWidth pt-16 pb-24 text-center space-y-4">
+        <div className="size-16 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 mx-auto">
+          <LuUserX className="size-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Worker Not Found</h2>
+        <p className="text-sm text-gray-500 max-w-md mx-auto">
+          The worker profile you are looking for does not exist or has been removed.
+        </p>
+        <Link
+          href="/employer/posted-jobs"
+          className="inline-block px-5 py-2.5 rounded-xl bg-brandClr2 hover:bg-[#f5be18] text-gray-950 font-bold text-sm shadow-sm transition-all"
+        >
+          Back to Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pb-16 space-y-6">
+      {/* ------------------- Worker Cover & Avatar ------------------- */}
+      <WorkerDetailsTop workerDetails={workerDetails} />
+
+      <div className="maxWidth space-y-6">
+        {/* ------------------- Booking & Message Action Bar ------------------- */}
+        <BookMessageButtons workerDetails={workerDetails} />
+
+        {/* ------------------- Worker Details Body ------------------- */}
+        <WorkerDetailsBody workerDetails={workerDetails} />
+
+        {/* ------------------- Client Reviews Section ------------------- */}
+        <WorkerReviewsSection reviews={reviews} workerRating={workerDetails?.rating} />
+      </div>
+    </div>
+  );
+};
+
+export default SingleWorker;
