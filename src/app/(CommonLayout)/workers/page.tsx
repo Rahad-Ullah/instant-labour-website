@@ -54,13 +54,14 @@ const Workers = async ({ searchParams }: { searchParams: { [key: string]: string
   // formatting the worker data to fit the worker card props
   const refineRes = res?.data?.data?.map((item: any) => {
     return {
+      ...item,
       _id: item?._id,
       profile: item?.profile,
       name: item?.name,
-      verified: item?.isAccountVerified,
+      verified: item?.isAccountVerified ?? item?.verified,
       createdAt: item?.createdAt,
       category: item?.category,
-      location: item?.address,
+      location: item?.address || item?.location,
       salary: item?.salary,
       salaryType: item?.salaryType,
       status: item?.status
@@ -127,12 +128,10 @@ const Workers = async ({ searchParams }: { searchParams: { [key: string]: string
       </div>
 
       {/* --------------- Workers --------------- */}
-      <div className=''>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12'>
+      <div>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8'>
           {refineRes?.map((item: any) => (
-            <Link href={`/workers/${item._id}`} key={item._id} className='space-y-2 bg-white hover:bg-gray-50 customShadow p-4 cursor-pointer transition-colors duration-100'>
-              <WorkerCard item={item} />
-            </Link>
+            <WorkerCard key={item._id} item={item} url={`/workers/${item._id}`} />
           ))}
         </div>
       </div>
