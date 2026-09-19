@@ -1,14 +1,14 @@
+import React from 'react';
 
-const FooterTitle = ({title}:{title:string}) => {
+const FooterTitle = ({ title }: { title: string }) => {
   return (
-    <div className='flex flex-col pb-6'>
-      <h3 className=" text-xl font-semibold py-3">{title}</h3>
-      
-      <p className='flex items-center w-40 h-[4px] bg-gray-50 rounded-[1px] opacity-50'>
-        <span className='w-12 h-[4px] bg-white rounded-[1px]' />
-      </p>
+    <div className="pb-4">
+      <h3 className="text-white font-bold text-base sm:text-lg tracking-tight">
+        {title}
+      </h3>
+      <div className="w-8 h-1 rounded-full bg-brandClr2 mt-2 shadow-xs" />
     </div>
-  )
-}
+  );
+};
 
-export default FooterTitle
+export default FooterTitle;
