@@ -49,7 +49,7 @@ const page = async ({ params }: { params: { id: string } }) => {
               <Link href={`/inbox`} className='border-2 border-brandClr2 bg-brandClr2 text-gray-800 font-semibold py-2 px-8 rounded-sm hover:bg-brandClr2/90 transition-colors duration-300'>Contact Now</Link>
               <CustomModal
                 title="Feedback"
-                trigger={<button className='border-2 border-blue-600 text-blue-600 font-semibold py-2 px-8 rounded-sm cursor-pointer hover:border-blue-700 transition-colors duration-300'>Feed Back</button>}
+                trigger={<button className='border-2 border-blue-600 text-blue-600 font-semibold py-2 px-8 rounded-sm cursor-pointer hover:border-blue-700 transition-colors duration-300'>Feedback</button>}
               >
                 <TakeReview id={jobDetails?.createdBy?._id} />
               </CustomModal>
