@@ -361,7 +361,7 @@ const JobPostForm = () => {
 
           {/* Image */}
           <div>
-            <p className="text-xl font-semibold pb-1">Upload Image</p>
+            <p className="text-xl font-semibold pb-1">Upload Work Image</p>
             <Input
               type="file"
               accept="image/*"

@@ -34,9 +34,8 @@ const InboxClient = ({
   const router = useRouter();
   const [clickedChat, setClickedChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
-  console.log(messages)
   const [isMsgLoading, setIsMsgLoading] = useState<boolean>(false);
-  
+
   // Real-time state
   const [dynamicChatList, setDynamicChatList] = useState<any[]>([]);
   const tokenUserId = typeof window !== "undefined" ? getUserIdClient() : null;
@@ -45,21 +44,21 @@ const InboxClient = ({
   const socketRef = useRef<Socket | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
   const { refreshUnreadMessageCount, setActiveChatId } = useNotification();
-  
+
   const SOCKET_URL = process.env.NEXT_PUBLIC_IMAGE_URL;
-  useEffect(()=>{
-    if(chatList?.data){
+  useEffect(() => {
+    if (chatList?.data) {
       const sortedList = [...chatList.data].sort((a, b) => {
         const dateA = new Date(a?.latestMessage?.createdAt || a?.createdAt || 0).getTime();
         const dateB = new Date(b?.latestMessage?.createdAt || b?.createdAt || 0).getTime();
         return dateB - dateA; // Sort in descending order (newest first)
       });
       setDynamicChatList(sortedList);
-    }else{
+    } else {
       setDynamicChatList([]);
     }
     refreshUnreadMessageCount();
-  },[chatList]);
+  }, [chatList]);
 
   const setActiveChatIdRef = useRef(setActiveChatId);
   useEffect(() => {
@@ -169,7 +168,7 @@ const InboxClient = ({
 
         // Trigger background fetch so backend database marks it as read
         if (incomingChatId) {
-          myFetch(`/message/${incomingChatId}?limit=1`).catch(() => {});
+          myFetch(`/message/${incomingChatId}?limit=1`).catch(() => { });
         }
       }
 
@@ -398,9 +397,8 @@ const InboxClient = ({
       <div className="flex h-full gap-4 md:gap-6">
         {/* Sidebar */}
         <div
-          className={`${
-            clickedChat ? "hidden md:block" : "w-full md:block"
-          } md:w-[320px] lg:w-95 shrink-0 h-full`}
+          className={`${clickedChat ? "hidden md:block" : "w-full md:block"
+            } md:w-[320px] lg:w-95 shrink-0 h-full`}
         >
           <InboxSidebar
             chatList={dynamicChatList}
@@ -413,9 +411,8 @@ const InboxClient = ({
 
         {/* Chat Window */}
         <div
-          className={`${
-            clickedChat ? "flex flex-col" : "hidden md:flex md:flex-col"
-          } flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full relative`}
+          className={`${clickedChat ? "flex flex-col" : "hidden md:flex md:flex-col"
+            } flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full relative`}
         >
           {clickedChat ? (
             <>
