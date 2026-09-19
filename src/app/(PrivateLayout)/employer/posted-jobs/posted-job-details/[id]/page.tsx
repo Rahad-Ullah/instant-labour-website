@@ -1,11 +1,10 @@
 import JobDetailsBody from '@/components/cui/JobDetailsBody';
 import JobDetailsTop from '@/components/cui/JobDetailsTop';
-import { APPLICATION_STATUS } from '@/types/jobTypes';
 import { myFetch } from '@/utils/myFetch';
 import Link from 'next/link';
 import React from 'react';
 import BoostJobButton from '@/components/cui/BoostJobButton';
-import { LuPencil, LuUsers, LuUserCheck, LuBriefcase } from 'react-icons/lu';
+import { LuPencil, LuUsers, LuBriefcase } from 'react-icons/lu';
 
 const PostedJobDetails = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
@@ -54,19 +53,11 @@ const PostedJobDetails = async ({ params }: { params: { id: string } }) => {
           </Link>
 
           <Link
-            href={`/employer/posted-jobs/worker-list?type=${APPLICATION_STATUS.PENDING}&jobId=${jobDetails._id}`}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 text-amber-900 border border-amber-200 font-semibold text-sm transition-all shadow-sm active:scale-[0.99]"
+            href={`/employer/posted-jobs/worker-list?jobId=${jobDetails._id}`}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 text-amber-950 border border-amber-200/90 font-semibold text-sm transition-all shadow-sm active:scale-[0.99]"
           >
-            <LuUsers className="size-4 text-amber-600" />
-            <span>Applied Workers</span>
-          </Link>
-
-          <Link
-            href={`/employer/posted-jobs/worker-list?type=${APPLICATION_STATUS.APPROVED}&jobId=${jobDetails._id}`}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 text-emerald-900 border border-emerald-200 font-semibold text-sm transition-all shadow-sm active:scale-[0.99]"
-          >
-            <LuUserCheck className="size-4 text-emerald-600" />
-            <span>Approved Workers</span>
+            <LuUsers className="size-4 text-amber-700" />
+            <span>Applicants & Workers</span>
           </Link>
 
           <BoostJobButton

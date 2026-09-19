@@ -13,7 +13,7 @@ import { myFetch } from '@/utils/myFetch';
 import Link from 'next/link';
 
 const ApproveAppliedWorkerDetails = async ({ searchParams, params }: { searchParams: any, params: any }) => {
-  const { type, jobId } = await searchParams
+  const { type, jobId, applicationId } = await searchParams
   const { id } = await params
 
   const res = await myFetch(`/user/workers/${id}`);
@@ -58,7 +58,7 @@ const ApproveAppliedWorkerDetails = async ({ searchParams, params }: { searchPar
       </div>
 
       {/* ------------------- Action Buttons - Decline, Approve ------------------- */}
-      {type === APPLICATION_STATUS.PENDING && <ApplicationApproveDeclineButtons applicationId={workerDetails._id} workerId={workerDetails?._id} jobId={jobId} />}
+      {type === APPLICATION_STATUS.PENDING && <ApplicationApproveDeclineButtons applicationId={applicationId || workerDetails?._id} workerId={workerDetails?._id} jobId={jobId} />}
 
 
     </div>

@@ -205,8 +205,6 @@ export default function Notifications() {
     }
   };
 
-  console.log("sbsabsadbadsb", notifications)
-
   if (isLoading) {
     return (
       <div className="maxWidth py-20 flex flex-col justify-center items-center space-y-4">
