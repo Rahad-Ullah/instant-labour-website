@@ -9,6 +9,7 @@ import { Search } from "lucide-react";
 import { useUpdateSearchParams } from "@/hooks/useUpdateSearchParams";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getUserIdClient } from "@/utils/getUserIdClient";
 
 interface InboxSidebarProps {
   chatList: any[];
@@ -16,6 +17,7 @@ interface InboxSidebarProps {
   onChatClick: (chat: any) => void;
   className?: string; // For hiding on mobile
   activeUserId?: string | null;
+  currentUser?: any;
 }
 
 const InboxSidebar = ({
@@ -24,6 +26,7 @@ const InboxSidebar = ({
   onChatClick,
   className = "",
   activeUserId,
+  currentUser,
 }: InboxSidebarProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,7 +46,8 @@ const InboxSidebar = ({
     params.set("chat_id", newId);
     params.delete("user_id");
     params.delete("name");
-    router.push(`?${params.toString()}`, { scroll: false });
+    const query = params.toString();
+    router.push(query ? `?${query}` : window.location.pathname, { scroll: false });
   };
 
   useEffect(()=>{
@@ -76,12 +80,69 @@ const InboxSidebar = ({
 
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent p-3 space-y-2">
         {chatList?.map((item) => {
-          // Check if message is unread AND sent by someone else
-          // If activeUserId is not yet loaded, we might default to comparing against participant
-          // But strict logic: isRead must be explicitly false
-          const isUnread =
-            item.latestMessage?.isRead === false &&
-            item.latestMessage?.sender?._id !== activeUserId;
+          const myId = (
+            activeUserId ||
+            currentUser?._id ||
+            currentUser?.id ||
+            (typeof window !== "undefined" ? getUserIdClient() : null)
+          )?.toString();
+
+          const participantId = (
+            item?.participant?._id ||
+            item?.participant?.id ||
+            item?.participant
+          )?.toString();
+
+          const myEmail = (currentUser?.email || "").trim().toLowerCase();
+          const participantEmail = (item?.participant?.email || "").trim().toLowerCase();
+
+          const receiverId = (
+            item?.latestMessage?.receiver?._id ||
+            item?.latestMessage?.receiver?.id ||
+            (typeof item?.latestMessage?.receiver === "string" ? item.latestMessage.receiver : null)
+          )?.toString();
+
+          const senderId = (
+            item?.latestMessage?.sender?._id ||
+            item?.latestMessage?.sender?.id ||
+            (typeof item?.latestMessage?.sender === "string" ? item.latestMessage.sender : null)
+          )?.toString();
+
+          const receiverEmail = (item?.latestMessage?.receiver?.email || "").trim().toLowerCase();
+          const senderEmail = (item?.latestMessage?.sender?.email || "").trim().toLowerCase();
+
+          let latestIsMe = false;
+          if (senderId && myId && senderId === myId) {
+            latestIsMe = true;
+          } else if (senderEmail && myEmail && senderEmail === myEmail) {
+            latestIsMe = true;
+          } else if (senderId && participantId && senderId === participantId) {
+            latestIsMe = false;
+          } else if (senderEmail && participantEmail && senderEmail === participantEmail) {
+            latestIsMe = false;
+          } else if (receiverId && participantId && receiverId === participantId) {
+            latestIsMe = true;
+          } else if (receiverEmail && participantEmail && receiverEmail === participantEmail) {
+            latestIsMe = true;
+          } else if (receiverId && myId && receiverId === myId) {
+            latestIsMe = false;
+          } else if (receiverEmail && myEmail && receiverEmail === myEmail) {
+            latestIsMe = false;
+          } else if (receiverId && myId && receiverId !== myId) {
+            latestIsMe = true;
+          } else if (receiverEmail && myEmail && receiverEmail !== myEmail) {
+            latestIsMe = true;
+          } else if (receiverId && participantId && receiverId !== participantId) {
+            latestIsMe = false;
+          } else if (receiverEmail && participantEmail && receiverEmail !== participantEmail) {
+            latestIsMe = false;
+          } else if (senderId && participantId && senderId !== participantId) {
+            latestIsMe = true;
+          } else if (senderId && myId && senderId !== myId) {
+            latestIsMe = false;
+          }
+
+          const isUnread = item.latestMessage?.isRead === false && !latestIsMe;
           return (
             <div
               key={item._id}
@@ -138,7 +199,7 @@ const InboxSidebar = ({
                     }`}
                 >
                   {item?.latestMessage?.files?.length > 0
-                    ? item.latestMessage?.sender?._id === activeUserId
+                    ? latestIsMe
                       ? "You sent an image"
                       : "Sent you an image"
                     : item?.latestMessage?.message || "No messages yet"}

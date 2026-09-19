@@ -1,12 +1,13 @@
 import { myFetch } from "@/utils/myFetch";
 import InboxClient from "./InboxClient";
+import { getUserIdServer } from "@/utils/getUserIdServer";
 
 const Inbox = async ({ searchParams }: { searchParams: any }) => {
   const { chat_id, user_id, name, searchChat } = await searchParams;
   const queryParams = new URLSearchParams();
   if (searchChat) queryParams.set("searchTerm", searchChat);
 
-  const [getChatList, userProfileRes] = await Promise.all([
+  const [getChatList, userProfileRes, tokenUserId] = await Promise.all([
     myFetch(`/chat?${queryParams.toString()}`, {
       method: "GET",
       cache: "no-cache",
@@ -14,14 +15,16 @@ const Inbox = async ({ searchParams }: { searchParams: any }) => {
     myFetch("/user/profile", {
       method: "GET",
     }),
+    getUserIdServer(),
   ]);
 
   const currentUser = userProfileRes?.data;
-  const currentUserId = currentUser?._id;
+  const currentUserId = currentUser?._id || currentUser?.id || tokenUserId;
+  const effectiveCurrentUser = currentUser || (tokenUserId ? { _id: tokenUserId } : null);
 
   const isCurrentUser = (p: any) => {
     if (!p) return false;
-    const pId = (p._id || p)?.toString();
+    const pId = (p._id || p.id || p)?.toString();
     return (
       (currentUserId && pId === currentUserId?.toString()) ||
       (currentUser?.name && p?.name === currentUser.name)
@@ -136,7 +139,7 @@ const Inbox = async ({ searchParams }: { searchParams: any }) => {
       <InboxClient
         chatList={getChatList}
         singleChat={singleChat}
-        currentUser={currentUser}
+        currentUser={effectiveCurrentUser}
       />
     </div>
   );

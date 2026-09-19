@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { IoClose } from "react-icons/io5";
 import { Menu } from "lucide-react";
+import { LuMessageCircle } from "react-icons/lu";
 import { MdOutlineNotificationsNone } from "react-icons/md";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger, } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu";
@@ -21,7 +22,7 @@ const Navbar = ({ userData }: { userData: any }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const { unreadCount } = useNotification();
+  const { unreadCount, unreadMessageCount } = useNotification();
 
   const [navbarItems, setNavbarItems] = useState(navbarItemsAll);
   const [dropdownItems, setDropdownItems] = useState(workerMenus);
@@ -56,7 +57,7 @@ const Navbar = ({ userData }: { userData: any }) => {
     setUser(userData);
   }, [pathname, userData]);
 
-  const hadleRedirect = (url: string) => {
+  const handleRedirect = (url: string) => {
     if (url === "/login") {
       deleteCookie("role");
       deleteCookie("accessToken");
@@ -100,17 +101,35 @@ const Navbar = ({ userData }: { userData: any }) => {
         {/* Log in / Mobile Menu Trigger */}
         <div className=" flex justify-end items-center gap-4 relative">
           {mounted && role && (
-            <Link
-              href="/notifications"
-              className="w-9 h-9 md:w-12 md:h-12 rounded-full  bg-gray-200 flex items-center justify-center relative"
-            >
-              <MdOutlineNotificationsNone className="size-6 md:size-7 text-gray-600 hover:text-gray-800 cursor-pointer" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] px-1">
-                  {unreadCount}
-                </span>
-              )}
-            </Link>
+            <>
+              {/* Inbox / Messages Button */}
+              <Link
+                href="/inbox"
+                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-gray-200 flex items-center justify-center relative hover:bg-gray-300 transition-colors"
+                title="Inbox"
+              >
+                <LuMessageCircle className="size-5 md:size-6 text-gray-600 hover:text-gray-800 cursor-pointer" />
+                {unreadMessageCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] px-1 font-semibold">
+                    {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* Notification Button */}
+              <Link
+                href="/notifications"
+                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-gray-200 flex items-center justify-center relative hover:bg-gray-300 transition-colors"
+                title="Notifications"
+              >
+                <MdOutlineNotificationsNone className="size-5 md:size-6 text-gray-600 hover:text-gray-800 cursor-pointer" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] px-1 font-semibold">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </Link>
+            </>
           )}
           {mounted && role ? (
             <DropdownMenu>
@@ -134,7 +153,7 @@ const Navbar = ({ userData }: { userData: any }) => {
                 {dropdownItems.map((item, index) => (
                   <DropdownMenuItem
                     key={index}
-                    onClick={() => hadleRedirect(item?.url)}
+                    onClick={() => handleRedirect(item?.url)}
                     className={`${isActive(item?.url)
                       ? "bg-brandClr1 text-white font-bold"
                       : "hover:bg-brandClr1 hover:text-white"
@@ -230,7 +249,7 @@ const Navbar = ({ userData }: { userData: any }) => {
                       ) : (
                         <div className="flex items-center justify-center gap-1 border-2 border-brandClr2 text-brandClr1 font-semibold py-1 px-4 rounded-full customShadow4 ">
                           <button
-                            onClick={() => hadleRedirect("/login")}
+                            onClick={() => handleRedirect("/login")}
                             className="text-sm "
                           >
                             Log out

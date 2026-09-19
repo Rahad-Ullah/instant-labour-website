@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { FaRegImages } from "react-icons/fa";
-import { IoIosSend } from "react-icons/io";
+import { PiPaperPlaneRightFill } from "react-icons/pi";
 import { IoClose } from "react-icons/io5";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -102,7 +102,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full transition-all duration-300"
+            className="p-3 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full transition-all duration-300 cursor-pointer"
             title="Attach images"
           >
             <FaRegImages className="text-xl" />
@@ -113,13 +113,12 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
             disabled={
               isLoading || (!msgText.trim() && selectedImages.length === 0)
             }
-            className={`p-3 rounded-full transition-all duration-300 shadow-md flex items-center justify-center ${
-              !msgText.trim() && selectedImages.length === 0
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:scale-105"
-            }`}
+            className={`p-3 rounded-full transition-all duration-300 shadow-md flex items-center justify-center cursor-pointer ${!msgText.trim() && selectedImages.length === 0
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:scale-105"
+              }`}
           >
-            <IoIosSend className="text-xl ml-0.5" />
+            <PiPaperPlaneRightFill className="text-xl ml-0.5" />
           </button>
         </div>
       </div>

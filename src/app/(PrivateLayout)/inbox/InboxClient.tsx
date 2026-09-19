@@ -10,8 +10,10 @@ import ChatHeader from "@/components/inbox/ChatHeader";
 import MessageList from "@/components/inbox/MessageList";
 import ChatInput from "@/components/inbox/ChatInput";
 import { brandLogo } from "@/assets/assets";
-import Image from "next/image";
 import { io, Socket } from "socket.io-client";
+import { useNotification } from "@/context/NotificationContext";
+import Image from "next/image";
+import { getUserIdClient } from "@/utils/getUserIdClient";
 
 // interface InboxClientProps {
 //   chatList: any;
@@ -32,13 +34,17 @@ const InboxClient = ({
   const router = useRouter();
   const [clickedChat, setClickedChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
+  console.log(messages)
   const [isMsgLoading, setIsMsgLoading] = useState<boolean>(false);
   
   // Real-time state
   const [dynamicChatList, setDynamicChatList] = useState<any[]>([]);
-  const [userId, setUserId] = useState<string | null>(currentUser?._id || null);
+  const tokenUserId = typeof window !== "undefined" ? getUserIdClient() : null;
+  const initialUserId = currentUser?._id || currentUser?.id || tokenUserId || null;
+  const [userId, setUserId] = useState<string | null>(initialUserId);
   const socketRef = useRef<Socket | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
+  const { refreshUnreadMessageCount, setActiveChatId } = useNotification();
   
   const SOCKET_URL = process.env.NEXT_PUBLIC_IMAGE_URL;
   useEffect(()=>{
@@ -52,7 +58,33 @@ const InboxClient = ({
     }else{
       setDynamicChatList([]);
     }
+    refreshUnreadMessageCount();
   },[chatList]);
+
+  const setActiveChatIdRef = useRef(setActiveChatId);
+  useEffect(() => {
+    setActiveChatIdRef.current = setActiveChatId;
+  }, [setActiveChatId]);
+
+  // Keep activeChatId synced with clickedChat
+  useEffect(() => {
+    const currentActiveId = (clickedChat?._ids || clickedChat?._id)?.toString() || null;
+    const participantId = (
+      clickedChat?.participant?._id ||
+      clickedChat?.participant?.id ||
+      clickedChat?.participant
+    )?.toString() || null;
+
+    selectedChatIdRef.current = currentActiveId;
+    setActiveChatId(currentActiveId, participantId);
+  }, [clickedChat, setActiveChatId]);
+
+  // Clean up active chat only on actual unmount
+  useEffect(() => {
+    return () => {
+      setActiveChatIdRef.current(null);
+    };
+  }, []);
 
   // 1. Fetch User ID
   useEffect(() => {
@@ -60,8 +92,8 @@ const InboxClient = ({
     const getProfile = async () => {
       try {
         const res = await myFetch("/user/profile", { method: "GET" });
-        if (res.success && res.data?._id) {
-          setUserId(res.data._id);
+        if (res.success && (res.data?._id || res.data?.id)) {
+          setUserId(res.data._id || res.data.id);
         }
       } catch (err) {
         console.error("Failed to fetch profile for socket:", err);
@@ -101,45 +133,72 @@ const InboxClient = ({
       //console.log("New Socket Message:", newMessage);
 
       const incomingChatId = (
-        newMessage?.chat?._id || newMessage?.chat
+        newMessage?.chat?._id ||
+        newMessage?.chat?.id ||
+        newMessage?.chatId ||
+        newMessage?.chat_id ||
+        newMessage?.chat
       )?.toString();
+
+      const senderId = (
+        newMessage?.sender?._id ||
+        newMessage?.sender?.id ||
+        newMessage?.sender
+      )?.toString();
+
+      const currentActiveId = selectedChatIdRef.current?.toString()?.toLowerCase();
+      const currentActivePartId = (
+        clickedChat?.participant?._id ||
+        clickedChat?.participant?.id ||
+        clickedChat?.participant
+      )?.toString()?.toLowerCase();
+
+      const isForActiveChat = Boolean(
+        (currentActiveId && incomingChatId && currentActiveId === incomingChatId.toLowerCase()) ||
+        (currentActivePartId && senderId && currentActivePartId === senderId.toLowerCase())
+      );
 
       // A. Update Active Chat Window if open
       // Use ref to get the current selected chat ID without stale closures
-      if (
-        selectedChatIdRef.current &&
-        incomingChatId &&
-        selectedChatIdRef.current.toString() === incomingChatId
-      ) {
+      if (isForActiveChat) {
         setMessages((prev) => {
           // Prevent duplicates
           if (prev.some((m) => m._id === newMessage._id)) return prev;
-          return [newMessage, ...prev];
+          return [{ ...newMessage, isRead: true }, ...prev];
         });
+
+        // Trigger background fetch so backend database marks it as read
+        if (incomingChatId) {
+          myFetch(`/message/${incomingChatId}?limit=1`).catch(() => {});
+        }
       }
 
       // B. Update Sidebar List
       setDynamicChatList((prevList) => {
         const newList = [...prevList];
         const existingIndex = newList.findIndex(
-          (c) => (c._id || c._ids)?.toString() === incomingChatId
+          (c) => (c._id || c._ids)?.toString()?.toLowerCase() === incomingChatId?.toLowerCase()
         );
 
         if (existingIndex !== -1) {
           // Update existing chat
           const updatedChat = { ...newList[existingIndex] };
-          updatedChat.latestMessage = newMessage;
+          updatedChat.latestMessage = isForActiveChat
+            ? { ...newMessage, isRead: true }
+            : newMessage;
 
           // Move to top
           newList.splice(existingIndex, 1);
           newList.unshift(updatedChat);
           return newList;
         } else {
-          // New chat logic handled by 'newChat' event usually, but if structure matches
-          // we could fetch it. For now, we rely on 'newChat' event for purely new conversations.
           return prevList;
         }
       });
+
+      if (isForActiveChat && currentActiveId) {
+        refreshUnreadMessageCount(currentActiveId);
+      }
     });
 
     // Listen for New Chats
@@ -156,11 +215,15 @@ const InboxClient = ({
   // Helper to ensure the participant is the other party, not the logged-in user
   const resolveChatParticipant = (chat: any) => {
     if (!chat) return chat;
-    const currentId = userId || currentUser?._id;
+    const currentId =
+      userId ||
+      currentUser?._id ||
+      currentUser?.id ||
+      (typeof window !== "undefined" ? getUserIdClient() : null);
 
     const isCurrent = (p: any) => {
       if (!p) return false;
-      const pid = (p._id || p)?.toString();
+      const pid = (p._id || p.id || p)?.toString();
       return (
         (currentId && pid === currentId.toString()) ||
         (currentUser?.name && p?.name === currentUser.name)
@@ -185,15 +248,15 @@ const InboxClient = ({
     // 2. Check participants array
     if (Array.isArray(chat.participants) && chat.participants.length > 0) {
       const other = chat.participants.find((p: any) => !isCurrent(p));
-      if (other && typeof other === "object") {
+      if (other) {
         if (!participant || isCurrent(participant)) {
-          participant = other;
+          participant = typeof other === "object" ? other : { _id: other };
         }
       }
     }
 
     // 3. Check worker or employer
-    if (isCurrent(participant)) {
+    if (isCurrent(participant) || !participant) {
       if (chat.worker && !isCurrent(chat.worker)) {
         participant = chat.worker;
       } else if (chat.employer && !isCurrent(chat.employer)) {
@@ -211,13 +274,20 @@ const InboxClient = ({
   const handleChatClick = async (item: any) => {
     const resolvedItem = resolveChatParticipant(item);
     setClickedChat(resolvedItem);
-    selectedChatIdRef.current = resolvedItem._id; // Sync ref
+    const resolvedChatId = (resolvedItem._ids || resolvedItem._id)?.toString();
+    const participantId = (
+      resolvedItem?.participant?._id ||
+      resolvedItem?.participant?.id ||
+      resolvedItem?.participant
+    )?.toString() || null;
+    selectedChatIdRef.current = resolvedChatId; // Sync ref
+    setActiveChatId(resolvedChatId, participantId); // Mark this chat and participant as actively being read
     setMessages([]); // Clear previous messages immediately
     setIsMsgLoading(true);
 
     try {
       const res = await myFetch(
-        `/message/${resolvedItem._ids || resolvedItem._id}?limit=100`,
+        `/message/${resolvedChatId}?limit=100`,
         {
           method: "GET",
         }
@@ -228,7 +298,7 @@ const InboxClient = ({
         // Mark sidebar chat as read locally
         setDynamicChatList((prev) =>
           prev.map((chat) => {
-            if (chat._id === resolvedItem._id && chat.latestMessage) {
+            if ((chat._id || chat._ids)?.toString() === resolvedChatId && chat.latestMessage) {
               return {
                 ...chat,
                 latestMessage: { ...chat.latestMessage, isRead: true },
@@ -237,6 +307,7 @@ const InboxClient = ({
             return chat;
           })
         );
+        refreshUnreadMessageCount(resolvedChatId);
       }
     } catch (error) {
       console.log(error);
@@ -307,6 +378,7 @@ const InboxClient = ({
   const handleBackToChatList = () => {
     setClickedChat(null);
     selectedChatIdRef.current = null;
+    setActiveChatId(null);
     const params = new URLSearchParams(window.location.search);
     params.delete("chat_id");
     params.delete("user_id");
@@ -314,6 +386,12 @@ const InboxClient = ({
     const query = params.toString();
     router.push(query ? `?${query}` : window.location.pathname, { scroll: false });
   };
+
+  const effectiveUserId =
+    userId ||
+    currentUser?._id ||
+    currentUser?.id ||
+    tokenUserId;
 
   return (
     <div className="maxWidth h-[calc(100vh-100px)] md:h-[calc(100vh-120px)] pb-4 md:pb-0">
@@ -328,7 +406,8 @@ const InboxClient = ({
             chatList={dynamicChatList}
             selectedChat={clickedChat}
             onChatClick={handleChatClick}
-            activeUserId={userId}
+            activeUserId={effectiveUserId}
+            currentUser={currentUser}
           />
         </div>
 
@@ -344,14 +423,16 @@ const InboxClient = ({
                 selectedChat={clickedChat}
                 chatList={dynamicChatList}
                 onChatClick={handleChatClick}
-                activeUserId={userId || currentUser?._id}
+                activeUserId={effectiveUserId}
+                currentUser={currentUser}
                 onBack={handleBackToChatList}
               />
               <MessageList
                 messages={messages}
                 isLoading={isMsgLoading}
                 clickedChat={clickedChat}
-                activeUserId={userId || currentUser?._id}
+                activeUserId={effectiveUserId}
+                currentUser={currentUser}
               />
               <ChatInput onSendMessage={handleSendMessage} />
             </>

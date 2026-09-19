@@ -22,6 +22,7 @@ interface ChatHeaderProps {
   chatList: any[]; // Needed for mobile sidebar
   onChatClick: (chat: any) => void;
   activeUserId?: string | null;
+  currentUser?: any;
   onBack?: () => void;
 }
 
@@ -30,6 +31,7 @@ const ChatHeader = ({
   chatList,
   onChatClick,
   activeUserId,
+  currentUser,
   onBack,
 }: ChatHeaderProps) => {
   const [openMessageMenu, setOpenMessageMenu] = useState(false);
@@ -82,6 +84,7 @@ const ChatHeader = ({
                     setOpenMessageMenu(false);
                   }}
                   activeUserId={activeUserId}
+                  currentUser={currentUser}
                   className="h-full border-0 !rounded-none shadow-none"
                 />
               </div>
