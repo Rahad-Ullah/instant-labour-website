@@ -165,10 +165,19 @@ const Navbar = ({ userData }: { userData: any }) => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="hidden lg:flex items-center gap-1 border-2 border-brandClr2 text-brandClr1 font-semibold py-1 px-4 rounded-full customShadow4 ">
-              <Link href="/signup">Sign Up</Link>
-              <span className="text-xl">/</span>
-              <Link href="/login">Log In</Link>
+            <div className="hidden lg:flex items-center gap-2">
+              <Link
+                href="/login"
+                className="border-2 border-brandClr2 text-brandClr1 font-semibold py-1 px-4 rounded-full customShadow4 hover:bg-brandClr2/10 transition"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-brandClr2 font-semibold py-1.5 px-4 rounded-full customShadow4 hover:brightness-95 transition"
+              >
+                Sign Up
+              </Link>
             </div>
           )}
 
