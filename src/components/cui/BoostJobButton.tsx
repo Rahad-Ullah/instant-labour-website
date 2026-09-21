@@ -101,19 +101,13 @@ const BoostJobButton: React.FC<BoostJobButtonProps> = ({
                 Boost This Job Posting?
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm text-gray-500 max-w-sm mx-auto">
-                {jobTitle ? (
-                  <>
-                    Are you sure you want to promote <strong className="text-gray-800">"{jobTitle}"</strong>?
-                  </>
-                ) : (
-                  "Are you sure you want to promote this job post?"
-                )}
+                Are you sure you want to promote this job post?
               </DialogDescription>
             </DialogHeader>
 
             {/* Benefits box */}
             <div className="w-full bg-slate-50/80 border border-slate-100 rounded-2xl p-4 text-left space-y-2.5 text-xs sm:text-sm">
-              <p className="font-bold text-gray-800 flex items-center gap-1.5 text-xs uppercase tracking-wider text-brandClr1">
+              <p className="font-bold flex items-center gap-1.5 text-xs uppercase tracking-wider text-brandClr1">
                 <LuFlame className="size-4 text-amber-500" />
                 What happens when you boost:
               </p>

@@ -6,7 +6,6 @@ import { formatUrl } from "@/utils/formatUrl";
 import dayjs from "dayjs";
 import Image from "next/image";
 import { Search } from "lucide-react";
-import { useUpdateSearchParams } from "@/hooks/useUpdateSearchParams";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getUserIdClient } from "@/utils/getUserIdClient";
@@ -30,7 +29,6 @@ const InboxSidebar = ({
 }: InboxSidebarProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const updateSearchParam = useUpdateSearchParams();
   const [searchChat, setSearchChat] = useState("")
 
 
@@ -50,16 +48,16 @@ const InboxSidebar = ({
     router.push(query ? `?${query}` : window.location.pathname, { scroll: false });
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if(searchChat){
+    if (searchChat) {
       params.set('searchChat', searchChat)
       router.push(`?${params.toString()}`, { scroll: false });
-    }else{
+    } else {
       params.delete('searchChat')
       router.push(`?${params.toString()}`, { scroll: false });
     }
-  },[searchChat]);
+  }, [searchChat]);
 
   return (
     <div
