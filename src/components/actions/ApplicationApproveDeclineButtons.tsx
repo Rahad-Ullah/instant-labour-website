@@ -102,7 +102,7 @@ const ApplicationApproveDeclineButtons: React.FC<
           <span>Application Pending Decision</span>
         </div>
         <p className="text-xs sm:text-sm text-gray-500">
-          Review this applicant&apos;s credentials and decide whether to approve
+          Review this applicant&apos;s details and decide whether to approve
           them for your job posting.
         </p>
       </div>
