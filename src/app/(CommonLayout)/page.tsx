@@ -284,7 +284,7 @@ export default async function Home() {
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 backdrop-blur-xs text-xs font-bold text-gray-900 border border-white/80 shadow-2xs">
                   <LuShieldCheck className="size-4 text-emerald-600" />
-                  <span>Verified Guarantee</span>
+                  <span>Response Guarantee</span>
                 </span>
               </div>
               <h3 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-gray-950 font-bold tracking-tight capitalize leading-tight">

@@ -14,7 +14,7 @@ import { myFetch } from '@/utils/myFetch'
 import LocationPicker from '@/components/map/LocationPicker'
 import { CustomModalAutoComplete } from '@/components/modal/CustomModalAutoComplete';
 import { IoCheckmarkCircle } from 'react-icons/io5';
-import { LuMapPin, LuPlus, LuShieldCheck, LuSparkles } from 'react-icons/lu';
+import { LuBriefcase, LuClock, LuMapPin, LuPlus, LuSparkles } from 'react-icons/lu';
 
 
 const Workers = async ({ searchParams }: { searchParams: { [key: string]: string } }) => {
@@ -95,7 +95,7 @@ const Workers = async ({ searchParams }: { searchParams: { [key: string]: string
             {/* Pill Tag */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-brandClr1 text-xs sm:text-sm font-semibold tracking-wide shadow-2xs">
               <LuSparkles className="size-3.5 text-brandClr2 fill-brandClr2" />
-              <span>Verified On-Demand Labour</span>
+              <span>Instant On-Demand Labour</span>
             </div>
 
             {/* Headline */}
@@ -120,8 +120,8 @@ const Workers = async ({ searchParams }: { searchParams: { [key: string]: string
                 Fast Hiring
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <LuShieldCheck className="size-4 text-brandClr1 shrink-0" />
-                Vetted Profiles
+                <LuClock className="size-4 text-brandClr1 shrink-0" />
+                Direct Hiring
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <LuMapPin className="size-4 text-brandClr2 shrink-0" />
@@ -171,14 +171,14 @@ const Workers = async ({ searchParams }: { searchParams: { [key: string]: string
                 </div>
               </div>
 
-              {/* Floating Badge 2: Verified Skills (Top Right) */}
+              {/* Floating Badge 2: Diverse Trades (Top Right) */}
               <div className="absolute top-2 -right-2 sm:top-6 sm:-right-4 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-2 sm:gap-2.5">
                 <div className="size-8 rounded-xl bg-blue-50 text-brandClr1 flex items-center justify-center font-bold">
-                  <LuShieldCheck className="size-5" />
+                  <LuBriefcase className="size-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-900 leading-tight">Verified Skills</p>
-                  <p className="text-[11px] text-gray-500 font-medium">Quality Guaranteed</p>
+                  <p className="text-xs font-bold text-gray-900 leading-tight">Diverse Trades</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Available on demand</p>
                 </div>
               </div>
             </div>

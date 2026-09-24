@@ -210,7 +210,7 @@ const WorkerCard: React.FC<WorkerCardProps> = ({ item, url, status }) => {
               ) : item?.yearsOfExperience ? (
                 <span>{item.yearsOfExperience} years of experience</span>
               ) : (
-                <span>Verified Labour Specialist</span>
+                <span>Available Labour Specialist</span>
               )}
             </p>
           </div>
