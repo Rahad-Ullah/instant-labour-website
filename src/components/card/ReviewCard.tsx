@@ -15,16 +15,23 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ item }) => {
   const [imgError, setImgError] = useState(false);
   const now = new Date();
 
-  const reviewer = item?.reviewer || {};
+  const reviewer =
+    typeof item?.reviewer === "object" && item?.reviewer !== null
+      ? item.reviewer
+      : {};
+  const reviewerName = reviewer?.name || item?.name || "Employer";
+  const rawProfile = reviewer?.profile || item?.profile || item?.img;
   const hasProfile = Boolean(
-    reviewer?.profile &&
-    reviewer.profile !== "undefined" &&
-    reviewer.profile !== "null" &&
-    !imgError
+    rawProfile &&
+      rawProfile !== "undefined" &&
+      rawProfile !== "null" &&
+      !imgError
   );
 
   const rating = Number(item?.rating || 5);
-  const timeStr = item?.updatedAt || item?.createdAt ? relativeTime(item?.updatedAt || item?.createdAt, { now }) : null;
+  const timeRaw = item?.updatedAt || item?.createdAt || item?.time;
+  const timeStr = timeRaw ? relativeTime(timeRaw, { now }) : null;
+  const reviewText = item?.review || item?.comment || item?.feedback;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200/80 p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-3">
@@ -34,10 +41,10 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ item }) => {
           <div className="size-11 sm:size-12 rounded-full overflow-hidden bg-slate-100 ring-2 ring-gray-100 flex items-center justify-center shrink-0">
             {hasProfile ? (
               <Image
-                src={formatUrl(reviewer.profile)}
+                src={formatUrl(rawProfile)}
                 width={48}
                 height={48}
-                alt={reviewer?.name || "Reviewer"}
+                alt={reviewerName}
                 className="w-full h-full object-cover"
                 onError={() => setImgError(true)}
               />
@@ -50,7 +57,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ item }) => {
 
           <div>
             <h4 className="font-bold text-sm sm:text-base text-gray-900 line-clamp-1">
-              {reviewer?.name || "Client"}
+              {reviewerName}
             </h4>
             {timeStr && (
               <p className="text-xs text-gray-500">{timeStr}</p>
@@ -68,9 +75,9 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ item }) => {
       </div>
 
       {/* Review Text */}
-      {item?.review && (
+      {reviewText && (
         <p className="text-sm text-gray-700 leading-relaxed bg-gray-50/60 p-3.5 rounded-xl border border-gray-100/80">
-          &ldquo;{item.review}&rdquo;
+          &ldquo;{reviewText}&rdquo;
         </p>
       )}
     </div>

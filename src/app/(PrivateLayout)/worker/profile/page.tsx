@@ -1,7 +1,7 @@
 
 
 import WorkerDetailsBody from '@/components/cui/WorkerDetailsBody'
-// import { workerDetails } from '@/data/workerDatas'
+import WorkerReviewsSection from '@/components/cui/WorkerReviewsSection'
 import Image from 'next/image'
 import React from 'react'
 import { RiSettings5Line } from "react-icons/ri";
@@ -11,18 +11,30 @@ import { myFetch } from '@/utils/myFetch';
 import { formatUrl } from '@/utils/formatUrl';
 import { brandLogo } from '@/assets/assets';
 import { LuUser } from 'react-icons/lu';
+import { getUserIdServer } from '@/utils/getUserIdServer';
 
 const Profile = async () => {
-  const res = await myFetch("/user/profile");
+  const [res, tokenUserId] = await Promise.all([
+    myFetch("/user/profile"),
+    getUserIdServer(),
+  ]);
   const workerDetails = res?.data;
+  const workerId = workerDetails?._id || workerDetails?.id || tokenUserId;
+
+  const resReview = workerId ? await myFetch(`/review/${workerId}`) : null;
+  const reviews = Array.isArray(resReview?.data)
+    ? resReview.data
+    : Array.isArray(workerDetails?.reviews)
+    ? workerDetails.reviews
+    : [];
 
   const hasCover = Boolean(workerDetails?.cover && workerDetails.cover !== "undefined" && workerDetails.cover !== "null");
   const hasProfile = Boolean(workerDetails?.profile && workerDetails.profile !== "undefined" && workerDetails.profile !== "null");
 
   return (
-    <div className='pb-20'>
+    <div className='pb-20 maxWidth'>
       {/* ------------------- Profile & Cover ------------------- */}
-      <div className='maxWidth relative'>
+      <div className='relative'>
         {hasCover ? (
           <Image
             src={formatUrl(workerDetails.cover)}
@@ -65,6 +77,15 @@ const Profile = async () => {
 
       {/* ------------------- Personal Info ------------------- */}
       <WorkerDetailsBody workerDetails={workerDetails} />
+
+      {/* ------------------- Reviews Section ------------------- */}
+      <div className='mt-8'>
+        <WorkerReviewsSection
+          reviews={reviews}
+          workerRating={workerDetails?.rating}
+          isOwnProfile={true}
+        />
+      </div>
     </div>
   )
 }
