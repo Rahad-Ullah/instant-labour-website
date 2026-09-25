@@ -2,12 +2,10 @@
 
 import { formatUrl } from '@/utils/formatUrl'
 import { myFetch } from '@/utils/myFetch'
-// import { updateImage } from '@/utils/updateImages'
-import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
-import { FiUpload } from 'react-icons/fi'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { toast } from 'sonner'
+import NidCardUpload from './NidCardUpload'
 
 const items = [
   { label: "Limited", value: "limited" },
@@ -22,7 +20,6 @@ const NidUploadEmployer = () => {
   const [nidBack, setNidBack] = useState<string>();
   const [nidFrontFile, setNidFrontFile] = useState<File>();
   const [nidBackFile, setNidBackFile] = useState<File>();
-  // const [nationality, setNationality] = useState<string>("british");
   const [employerType, setEmployerType] = useState<string>();
   const [businessName, setBusinessName] = useState<string>("");
   const [companyNumber, setCompanyNumber] = useState<string>("");
@@ -30,48 +27,57 @@ const NidUploadEmployer = () => {
   const [preEmploymentCheck, setPreEmploymentCheck] = useState<boolean>(false);
 
   const fetchProfile = async () => {
-    const res = await myFetch(`/user/profile`,)
-    // console.log("Get profile Data : ", res);
-    const nidFront = formatUrl(res?.data?.nidFront);
-    const nidBack = formatUrl(res?.data?.nidBack);
-    setNidFornt(nidFront);
-    setNidBack(nidBack);
-    // const nationality = res?.data?.isBritish ? "british" : "non-british";
-    // setNationality(nationality);
-    setBusinessName(res?.data?.businessName || "")
-    setEmployerType(res?.data?.employerType || items[0].value)
-    setCompanyNumber(res?.data?.companyNumber || "")
-    setRegisteredAddress(res?.data?.registeredAddress || "")
+    try {
+      const res = await myFetch(`/user/profile`);
+      const rawFront = res?.data?.nidFront;
+      const rawBack = res?.data?.nidBack;
+
+      if (rawFront && typeof rawFront === 'string' && !rawFront.includes('defaultImage') && rawFront.trim() !== '') {
+        setNidFornt(formatUrl(rawFront));
+      } else {
+        setNidFornt(undefined);
+      }
+
+      if (rawBack && typeof rawBack === 'string' && !rawBack.includes('defaultImage') && rawBack.trim() !== '') {
+        setNidBack(formatUrl(rawBack));
+      } else {
+        setNidBack(undefined);
+      }
+
+      setBusinessName(res?.data?.businessName || "");
+      setEmployerType(res?.data?.employerType || items[0].value);
+      setCompanyNumber(res?.data?.companyNumber || "");
+      setRegisteredAddress(res?.data?.registeredAddress || "");
+    } catch (error) {
+      console.error("Error fetching employer profile:", error);
+    }
   }
+
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  const handleNidFornt = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleNidFront = (file: File) => {
     setNidFrontFile(file);
     const url = URL.createObjectURL(file);
     setNidFornt(url);
-    // updateImage({ image: file, type: "nidFront" })
   }
 
-  const handleNidBack = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleNidBack = (file: File) => {
     setNidBackFile(file);
     const url = URL.createObjectURL(file);
     setNidBack(url);
-    // updateImage({ image: file, type: "nidBack" })
   }
 
-  // const activeStyle = (value: string) => {
-  //   if (nationality === value) {
-  //     return 'bg-[#FFC823] border border-[#FFC823]';
-  //   } else {
-  //     return 'border border-gray-500';
-  //   }
-  // }
+  const handleRemoveFront = () => {
+    setNidFrontFile(undefined);
+    setNidFornt(undefined);
+  }
+
+  const handleRemoveBack = () => {
+    setNidBackFile(undefined);
+    setNidBack(undefined);
+  }
 
   const handleSubmit = async () => {
     if (!preEmploymentCheck) {
@@ -79,13 +85,11 @@ const NidUploadEmployer = () => {
       return
     }
     const payload = {
-      // isBritish: nationality === "british" ? true : false,
       employerType,
       businessName,
       ...(employerType === "limited" ? { companyNumber } : { companyNumber: "" }),
       registeredAddress
     }
-    //console.log(payload, nidFrontFile, nidBackFile);
     const formData = new FormData();
 
     formData.append("data", JSON.stringify(payload));
@@ -102,7 +106,6 @@ const NidUploadEmployer = () => {
       body: formData
     })
 
-    //console.log("Verification Update : ", res)
     if (res.success) {
       toast.success("Verification request send to admin successfully");
       await fetchProfile();
@@ -110,42 +113,31 @@ const NidUploadEmployer = () => {
   }
 
   return (
-    <div className='min-h-[600px] space-y-4 w-full max-w-[740px] '>
-      {/* <div className='space-y-2'>
-        <p className='font-semibold text-2xl text-gray-800'>Select Method</p>
-        <div className='flex flex-col sm:flex-row gap-3 w-full'>
-          <button onClick={() => setNationality("british")} className={`${activeStyle('british')} w-full px-3 py-2 rounded-md font-semibold text-gray-700 transition-colors duration-300 cursor-pointer`}>British Nationals</button>
-          <button onClick={() => setNationality("non-british")} className={`${activeStyle('non-british')} w-full px-3 py-2 rounded-md font-semibold text-gray-700 transition-colors duration-300 cursor-pointer`}>Non British Nationals</button>
-        </div>
-      </div> */}
-      <p className='font-semibold text-lg text-gray-700'>NID (Font Side & Back Side )</p>
-      <div className='flex items-center flex-wrap gap-4'>
-        <div className='relative w-90 h-40 sm:h-45 md:h-50'>
-          {nidFornt ? (
-            <Image src={nidFornt} width={300} height={100} alt="nidFornt" className=' object-cover w-full h-full' />
-          ) : (
-            <div className='w-full h-full flex items-center justify-center bg-gray-200'>
-              <span className='text-gray-600 font-semibold text-xl'>Upload National ID Front</span>
-            </div>
-          )}
-          <div onClick={() => document.getElementById("nidForntImg")?.click()} className='w-6 h-6 md:w-8 md:h-8 rounded-full border bg-[#E6EEFC] flex items-center justify-center absolute top-0 right-0 transform -translate-x-1/2 translate-y-1/2'>
-            <FiUpload className='text-gray-700 text-lg md:text-xl' />
-          </div>
-          <input id="nidForntImg" type="file" accept='image/*' onChange={handleNidFornt} className='hidden' />
-        </div>
-        <div className='relative w-90 h-40 sm:h-45 md:h-50'>
-          {nidBack ? (
-            <Image src={nidBack} width={300} height={100} alt="nidFornt" className=' object-cover w-full h-full' />
-          ) : (
-            <div className='w-full h-full flex items-center justify-center bg-gray-200'>
-              <span className='text-gray-600 font-semibold text-xl'>Upload National ID Back</span>
-            </div>
-          )}
-          <div onClick={() => document.getElementById("nidBackImg")?.click()} className='w-6 h-6 md:w-8 md:h-8 rounded-full border bg-[#E6EEFC] flex items-center justify-center absolute top-0 right-0 transform -translate-x-1/2 translate-y-1/2'>
-            <FiUpload className='text-gray-700 text-lg md:text-xl' />
-          </div>
-          <input id="nidBackImg" type="file" accept='image/*' onChange={handleNidBack} className='hidden' />
-        </div>
+    <div className='min-h-[600px] space-y-6 w-full max-w-[760px]'>
+      <div>
+        <h2 className='font-semibold text-lg sm:text-xl text-gray-800'>
+          Identity Document Verification
+        </h2>
+        <p className='text-sm text-gray-500 mt-1'>
+          Please upload clear photos or scans of both the front and back of your identity document.
+        </p>
+      </div>
+
+      <div className='flex items-start flex-wrap gap-5'>
+        <NidCardUpload
+          side="front"
+          imageUrl={nidFornt}
+          inputId="nidForntImgEmployer"
+          onFileSelect={handleNidFront}
+          onRemove={handleRemoveFront}
+        />
+        <NidCardUpload
+          side="back"
+          imageUrl={nidBack}
+          inputId="nidBackImgEmployer"
+          onFileSelect={handleNidBack}
+          onRemove={handleRemoveBack}
+        />
       </div>
       <div className='space-y-4'>
         <div className='space-y-2'>
