@@ -13,7 +13,14 @@ export const getUserIdServer = async (): Promise<string | null> => {
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = Buffer.from(base64, "base64").toString("utf-8");
     const parsed = JSON.parse(jsonPayload);
-    return parsed?._id || parsed?.id || parsed?.userId || parsed?.sub || null;
+    return (
+      parsed?._id ||
+      parsed?.id ||
+      parsed?.authId ||
+      parsed?.userId ||
+      parsed?.sub ||
+      null
+    );
   } catch {
     return null;
   }

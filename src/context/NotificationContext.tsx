@@ -8,6 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { getCookie } from "cookies-next";
 import { myFetch } from "@/utils/myFetch";
@@ -36,9 +37,10 @@ export const NotificationProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(() => getUserIdClient());
   const [activeChatId, setActiveChatIdState] = useState<string | null>(null);
   const activeChatIdRef = useRef<string | null>(null);
   const activeParticipantIdRef = useRef<string | null>(null);
@@ -62,15 +64,16 @@ export const NotificationProvider = ({
     const getProfile = async () => {
       try {
         const res = await myFetch("/user/profile", { method: "GET" });
-        if (res.success && (res.data?._id || res.data?.id)) {
-          setUserId(res.data._id || res.data.id);
+        if (res.success && (res.data?._id || res.data?.id || res.data?.authId)) {
+          const profileId = res.data._id || res.data.id || res.data.authId;
+          setUserId(profileId);
         }
       } catch (err) {
         console.error("Failed to fetch profile for notifications:", err);
       }
     };
     getProfile();
-  }, []);
+  }, [pathname]);
 
   // Fetch initial notifications count
   useEffect(() => {
@@ -207,9 +210,22 @@ export const NotificationProvider = ({
       console.log("Global Notification/Chat Socket connected");
     });
 
-    socket.on(`notification::${userId}`, (newNotification: any) => {
+    const handleNewNotification = (newNotification: any) => {
       console.log("New Notification received in Context:", newNotification);
       setUnreadCount((prev) => prev + 1);
+    };
+
+    socket.on(`notification::${userId}`, handleNewNotification);
+    socket.on("notification::[object Object]", handleNewNotification);
+    socket.on("notification", (newNotification: any) => {
+      const targetTo = (
+        newNotification?.to?._id ||
+        newNotification?.to?.id ||
+        newNotification?.to
+      )?.toString();
+      if (!targetTo || targetTo === userId || targetTo === "[object Object]") {
+        handleNewNotification(newNotification);
+      }
     });
 
     // Listen for new messages

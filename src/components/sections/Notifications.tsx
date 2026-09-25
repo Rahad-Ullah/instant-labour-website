@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { io, Socket } from "socket.io-client";
 import { getCookie } from "cookies-next";
+import { getUserIdClient } from "@/utils/getUserIdClient";
 import { useNotification } from "@/context/NotificationContext";
 import { Bell, BellOff, CheckCheck, Search } from "lucide-react";
 
@@ -28,7 +29,7 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_IMAGE_URL;
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(() => getUserIdClient());
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const socketRef = useRef<Socket | null>(null);
@@ -42,11 +43,16 @@ export default function Notifications() {
 
   // 1. Fetch User Profile to get ID
   useEffect(() => {
+    const tokenUserId = getUserIdClient();
+    if (tokenUserId) {
+      setUserId((prev) => prev || tokenUserId);
+    }
+
     const getProfile = async () => {
       try {
         const res = await myFetch("/user/profile", { method: "GET" });
-        if (res.success && res.data?._id) {
-          setUserId(res.data._id);
+        if (res.success && (res.data?._id || res.data?.id || res.data?.authId)) {
+          setUserId(res.data._id || res.data.id || res.data.authId);
         }
       } catch (err) {
         console.error("Failed to fetch profile:", err);
@@ -100,8 +106,21 @@ export default function Notifications() {
       console.log("Notification Socket connected:", socket.id);
     });
 
-    socket.on(`notification::${userId}`, (newNotification: any) => {
+    const handleNewNotification = (newNotification: any) => {
       setNotifications((prev) => [newNotification, ...prev]);
+    };
+
+    socket.on(`notification::${userId}`, handleNewNotification);
+    socket.on("notification::[object Object]", handleNewNotification);
+    socket.on("notification", (newNotification: any) => {
+      const targetTo = (
+        newNotification?.to?._id ||
+        newNotification?.to?.id ||
+        newNotification?.to
+      )?.toString();
+      if (!targetTo || targetTo === userId || targetTo === "[object Object]") {
+        handleNewNotification(newNotification);
+      }
     });
 
     return () => {
@@ -250,30 +269,27 @@ export default function Notifications() {
           <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl shadow-2xs border border-gray-200/50 self-start">
             <button
               onClick={() => setFilter("all")}
-              className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${
-                filter === "all"
+              className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${filter === "all"
                   ? "bg-brandClr1 text-white shadow-xs"
                   : "text-gray-600 hover:text-gray-950 hover:bg-gray-50"
-              }`}
+                }`}
             >
               All ({notifications.length})
             </button>
             <button
               onClick={() => setFilter("unread")}
-              className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                filter === "unread"
+              className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer flex items-center gap-1.5 ${filter === "unread"
                   ? "bg-brandClr1 text-white shadow-xs"
                   : "text-gray-600 hover:text-gray-950 hover:bg-gray-50"
-              }`}
+                }`}
             >
               Unread
               {unreadCount > 0 && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    filter === "unread"
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${filter === "unread"
                       ? "bg-white text-brandClr1"
                       : "bg-brandClr1 text-white"
-                  }`}
+                    }`}
                 >
                   {unreadCount}
                 </span>
@@ -281,11 +297,10 @@ export default function Notifications() {
             </button>
             <button
               onClick={() => setFilter("read")}
-              className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${
-                filter === "read"
+              className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${filter === "read"
                   ? "bg-brandClr1 text-white shadow-xs"
                   : "text-gray-600 hover:text-gray-950 hover:bg-gray-50"
-              }`}
+                }`}
             >
               Read ({readCount})
             </button>
@@ -317,10 +332,10 @@ export default function Notifications() {
                 {searchQuery
                   ? "No matching notifications found"
                   : filter === "unread"
-                  ? "No unread notifications"
-                  : filter === "read"
-                  ? "No read notifications"
-                  : "No notifications found"}
+                    ? "No unread notifications"
+                    : filter === "read"
+                      ? "No read notifications"
+                      : "No notifications found"}
               </p>
               <p className="text-gray-400 text-sm max-w-xs mx-auto mt-1">
                 {searchQuery
@@ -336,11 +351,10 @@ export default function Notifications() {
               <div
                 key={item._id}
                 onClick={() => handleNotificationClick(item)}
-                className={`group relative flex items-start gap-4 p-4 border rounded-xl transition-all duration-300 cursor-pointer ${
-                  !item.isRead
+                className={`group relative flex items-start gap-4 p-4 border rounded-xl transition-all duration-300 cursor-pointer ${!item.isRead
                     ? "bg-brandClr1/[0.02] border-brandClr1/15 hover:border-brandClr1/30 hover:bg-brandClr1/[0.04]"
                     : "bg-white border-gray-150/75 hover:border-gray-300 hover:shadow-xs"
-                } hover:-translate-y-0.5`}
+                  } hover:-translate-y-0.5`}
               >
                 {/* Unread indicator dot/bar */}
                 {!item.isRead && (
@@ -362,9 +376,8 @@ export default function Notifications() {
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center justify-between gap-3">
                     <span
-                      className={`text-sm md:text-base text-gray-900 truncate ${
-                        !item.isRead ? "font-bold" : "font-semibold"
-                      }`}
+                      className={`text-sm md:text-base text-gray-900 truncate ${!item.isRead ? "font-bold" : "font-semibold"
+                        }`}
                     >
                       {item.from?.name || "System"}
                     </span>
@@ -374,9 +387,8 @@ export default function Notifications() {
                   </div>
 
                   <h4
-                    className={`text-sm md:text-base text-gray-850 leading-snug ${
-                      !item.isRead ? "font-semibold" : "font-medium"
-                    }`}
+                    className={`text-sm md:text-base text-gray-850 leading-snug ${!item.isRead ? "font-semibold" : "font-medium"
+                      }`}
                   >
                     {title}
                   </h4>

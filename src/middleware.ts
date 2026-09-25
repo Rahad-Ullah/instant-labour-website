@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const authRoutes = [
+    "/signup",
     "/login",
     "/forgot-password",
-    "/otp-verify",
+    "/verify-otp",
     "/reset-password",
 ];
 

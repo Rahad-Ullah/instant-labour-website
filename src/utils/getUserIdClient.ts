@@ -17,7 +17,14 @@ export const getUserIdClient = (): string | null => {
         .join("")
     );
     const parsed = JSON.parse(jsonPayload);
-    return parsed?._id || parsed?.id || parsed?.userId || parsed?.sub || null;
+    return (
+      parsed?._id ||
+      parsed?.id ||
+      parsed?.authId ||
+      parsed?.userId ||
+      parsed?.sub ||
+      null
+    );
   } catch {
     return null;
   }
