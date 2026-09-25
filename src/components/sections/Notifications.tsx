@@ -35,8 +35,6 @@ export default function Notifications() {
   const now = new Date();
   const { resetUnreadCount } = useNotification();
 
-  console.log("Notifications ===>>>", notifications);
-
   // Reset badge count on mount
   useEffect(() => {
     resetUnreadCount();

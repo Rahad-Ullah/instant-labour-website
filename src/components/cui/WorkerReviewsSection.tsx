@@ -13,6 +13,7 @@ interface WorkerReviewsSectionProps {
   emptyTitle?: string;
   emptySubtitle?: string;
   isOwnProfile?: boolean;
+  defaultReviewerRole?: string;
 }
 
 const WorkerReviewsSection: React.FC<WorkerReviewsSectionProps> = ({
@@ -23,6 +24,7 @@ const WorkerReviewsSection: React.FC<WorkerReviewsSectionProps> = ({
   emptyTitle,
   emptySubtitle,
   isOwnProfile = false,
+  defaultReviewerRole,
 }) => {
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<number | "all">("all");
 
@@ -227,7 +229,11 @@ const WorkerReviewsSection: React.FC<WorkerReviewsSectionProps> = ({
         filteredReviews.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredReviews.map((item: any, index: number) => (
-              <ReviewCard key={item?._id || index} item={item} />
+              <ReviewCard
+                key={item?._id || index}
+                item={item}
+                defaultReviewerRole={defaultReviewerRole}
+              />
             ))}
           </div>
         ) : (
@@ -261,4 +267,5 @@ const WorkerReviewsSection: React.FC<WorkerReviewsSectionProps> = ({
   );
 };
 
+export { WorkerReviewsSection as JobReviewsSection };
 export default WorkerReviewsSection;

@@ -9,9 +9,10 @@ import { relativeTime } from '@/utils/relativeTimes';
 
 interface ReviewCardProps {
   item: Record<string, any>;
+  defaultReviewerRole?: string;
 }
 
-const ReviewCard: React.FC<ReviewCardProps> = ({ item }) => {
+const ReviewCard: React.FC<ReviewCardProps> = ({ item, defaultReviewerRole }) => {
   const [imgError, setImgError] = useState(false);
   const now = new Date();
 
@@ -19,7 +20,15 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ item }) => {
     typeof item?.reviewer === "object" && item?.reviewer !== null
       ? item.reviewer
       : {};
-  const reviewerName = reviewer?.name || item?.name || "Employer";
+  const reviewerName =
+    reviewer?.name ||
+    item?.name ||
+    defaultReviewerRole ||
+    (reviewer?.role === "worker"
+      ? "Worker"
+      : reviewer?.role === "employer"
+      ? "Employer"
+      : "User");
   const rawProfile = reviewer?.profile || item?.profile || item?.img;
   const hasProfile = Boolean(
     rawProfile &&

@@ -4,6 +4,7 @@ import { myFetch } from '@/utils/myFetch';
 import Link from 'next/link';
 import React from 'react';
 import BoostJobButton from '@/components/cui/BoostJobButton';
+import WorkerReviewsSection from '@/components/cui/WorkerReviewsSection';
 import { LuPencil, LuUsers, LuBriefcase } from 'react-icons/lu';
 
 const PostedJobDetails = async ({ params }: { params: { id: string } }) => {
@@ -25,6 +26,27 @@ const PostedJobDetails = async ({ params }: { params: { id: string } }) => {
       </div>
     );
   }
+
+  const employerId =
+    jobDetails?.createdBy?._id ||
+    (typeof jobDetails?.createdBy === 'string' ? jobDetails?.createdBy : null);
+
+  const [resEmployerReviews, resJobReviews] = await Promise.all([
+    employerId ? myFetch(`/review/${employerId}`) : Promise.resolve(null),
+    id ? myFetch(`/review/${id}`) : Promise.resolve(null),
+  ]);
+
+  const combinedReviews = [
+    ...(Array.isArray(jobDetails?.reviews) ? jobDetails.reviews : []),
+    ...(Array.isArray(resJobReviews?.data) ? resJobReviews.data : []),
+    ...(Array.isArray(resEmployerReviews?.data) ? resEmployerReviews.data : []),
+  ];
+
+  const reviews = Array.from(
+    new Map(
+      combinedReviews.map((r: any) => [r?._id || JSON.stringify(r), r])
+    ).values()
+  );
 
   return (
     <div className="maxWidth pt-4 pb-20 space-y-6">
@@ -70,6 +92,17 @@ const PostedJobDetails = async ({ params }: { params: { id: string } }) => {
 
       {/* --------------------- Job body (description) --------------------- */}
       <JobDetailsBody jobDetails={jobDetails} />
+
+      {/* --------------------- Worker Reviews --------------------- */}
+      <WorkerReviewsSection
+        reviews={reviews}
+        workerRating={jobDetails?.createdBy?.rating || 5}
+        title="Worker Reviews & Ratings"
+        subtitle="Feedback and ratings submitted by workers for this job posting"
+        emptyTitle="No Worker Reviews Yet"
+        emptySubtitle="No workers have submitted feedback or reviews for this job post yet."
+        defaultReviewerRole="Worker"
+      />
     </div>
   );
 };
