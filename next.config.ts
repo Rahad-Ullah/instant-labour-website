@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["*"],
-
   images: {
     domains: [
       "i.ibb.co.com",
@@ -11,6 +10,11 @@ const nextConfig: NextConfig = {
       "example.com",
       "api.instantlabour.co.uk"
     ],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
 };
 

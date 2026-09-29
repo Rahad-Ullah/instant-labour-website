@@ -3,6 +3,52 @@
 import React, { useRef, useState } from 'react'
 import Image from 'next/image'
 import { FiUploadCloud, FiRefreshCw, FiTrash2, FiCheck } from 'react-icons/fi'
+import { toast } from 'sonner'
+
+export const MAX_FILE_SIZE_MB = 5
+export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
+export const ALLOWED_IMAGE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/pjpeg',
+  'image/webp',
+]
+export const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp']
+
+/**
+ * Validates a National ID file for allowed format (PNG, JPG, JPEG, WEBP)
+ * and maximum file size (default 5MB).
+ */
+export const validateNidFile = (
+  file: File,
+  maxSizeMB: number = MAX_FILE_SIZE_MB
+): { valid: boolean; error?: string } => {
+  if (!file) {
+    return { valid: false, error: 'No file selected.' }
+  }
+
+  const fileName = file.name.toLowerCase()
+  const hasValidExt = ALLOWED_IMAGE_EXTENSIONS.some((ext) => fileName.endsWith(ext))
+  const hasValidMime = ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())
+
+  if (!hasValidMime && !hasValidExt) {
+    return {
+      valid: false,
+      error: 'Invalid file format. Only PNG, JPG, JPEG, and WEBP formats are allowed.',
+    }
+  }
+
+  const maxSizeBytes = maxSizeMB * 1024 * 1024
+  if (file.size > maxSizeBytes) {
+    return {
+      valid: false,
+      error: `File size exceeds ${maxSizeMB}MB limit. Please upload an image smaller than ${maxSizeMB}MB.`,
+    }
+  }
+
+  return { valid: true }
+}
 
 interface NidCardUploadProps {
   side: 'front' | 'back'
@@ -10,7 +56,9 @@ interface NidCardUploadProps {
   inputId: string
   onFileSelect: (file: File) => void
   onRemove?: () => void
+  maxSizeMB?: number
 }
+
 
 /**
  * Realistic vector graphic illustration of the FRONT side of an ID card.
@@ -337,6 +385,7 @@ export const NidCardUpload: React.FC<NidCardUploadProps> = ({
   inputId,
   onFileSelect,
   onRemove,
+  maxSizeMB = MAX_FILE_SIZE_MB,
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -344,6 +393,19 @@ export const NidCardUpload: React.FC<NidCardUploadProps> = ({
   const isFront = side === 'front'
   const title = isFront ? 'Front Side' : 'Back Side'
   const hasValidImage = isValidNidImage(imageUrl)
+
+  const validateAndSelectFile = (file: File): boolean => {
+    const result = validateNidFile(file, maxSizeMB)
+    if (!result.valid) {
+      toast.error(result.error || 'Invalid file')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return false
+    }
+    onFileSelect(file)
+    return true
+  }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -362,18 +424,21 @@ export const NidCardUpload: React.FC<NidCardUploadProps> = ({
     e.stopPropagation()
     setIsDragging(false)
     const file = e.dataTransfer.files?.[0]
-    if (file && file.type.startsWith('image/')) {
-      onFileSelect(file)
+    if (file) {
+      validateAndSelectFile(file)
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    onFileSelect(file)
+    validateAndSelectFile(file)
   }
 
   const triggerUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
     fileInputRef.current?.click()
   }
 
@@ -417,7 +482,7 @@ export const NidCardUpload: React.FC<NidCardUploadProps> = ({
           ref={fileInputRef}
           id={inputId}
           type="file"
-          accept="image/*"
+          accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
           onChange={handleInputChange}
           className="hidden"
         />
@@ -512,7 +577,7 @@ export const NidCardUpload: React.FC<NidCardUploadProps> = ({
                 Click or drag & drop image
               </p>
               <span className="text-[10px] text-gray-400 mt-1 font-medium">
-                JPG, PNG or WEBP (up to 10MB)
+                PNG, JPG, JPEG or WEBP (max {maxSizeMB}MB)
               </span>
             </div>
           </div>

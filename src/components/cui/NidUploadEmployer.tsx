@@ -5,7 +5,7 @@ import { myFetch } from '@/utils/myFetch'
 import React, { useEffect, useState } from 'react'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { toast } from 'sonner'
-import NidCardUpload from './NidCardUpload'
+import NidCardUpload, { validateNidFile } from './NidCardUpload'
 
 const items = [
   { label: "Limited", value: "limited" },
@@ -58,12 +58,22 @@ const NidUploadEmployer = () => {
   }, []);
 
   const handleNidFront = (file: File) => {
+    const validation = validateNidFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
+    }
     setNidFrontFile(file);
     const url = URL.createObjectURL(file);
     setNidFornt(url);
   }
 
   const handleNidBack = (file: File) => {
+    const validation = validateNidFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
+    }
     setNidBackFile(file);
     const url = URL.createObjectURL(file);
     setNidBack(url);
@@ -95,9 +105,19 @@ const NidUploadEmployer = () => {
     formData.append("data", JSON.stringify(payload));
 
     if (nidFrontFile) {
+      const frontCheck = validateNidFile(nidFrontFile);
+      if (!frontCheck.valid) {
+        toast.error(`Front side ID: ${frontCheck.error}`);
+        return;
+      }
       formData.append("nidFront", nidFrontFile);
     }
     if (nidBackFile) {
+      const backCheck = validateNidFile(nidBackFile);
+      if (!backCheck.valid) {
+        toast.error(`Back side ID: ${backCheck.error}`);
+        return;
+      }
       formData.append("nidBack", nidBackFile);
     }
 
@@ -119,7 +139,7 @@ const NidUploadEmployer = () => {
           Identity Document Verification
         </h2>
         <p className='text-sm text-gray-500 mt-1'>
-          Please upload clear photos or scans of both the front and back of your identity document.
+          Please upload clear photos or scans of both the front and back of your identity document (PNG, JPG, JPEG, or WEBP, max 5MB each).
         </p>
       </div>
 

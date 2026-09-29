@@ -4,7 +4,7 @@ import { formatUrl } from '@/utils/formatUrl'
 import { myFetch } from '@/utils/myFetch'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import NidCardUpload from './NidCardUpload'
+import NidCardUpload, { validateNidFile } from './NidCardUpload'
 
 const NidUploadWorker = () => {
   const [nidFornt, setNidFornt] = useState<string>();
@@ -41,12 +41,22 @@ const NidUploadWorker = () => {
   }, []);
 
   const handleNidFront = (file: File) => {
+    const validation = validateNidFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
+    }
     setNidFrontFile(file);
     const url = URL.createObjectURL(file);
     setNidFornt(url);
   }
 
   const handleNidBack = (file: File) => {
+    const validation = validateNidFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
+    }
     setNidBackFile(file);
     const url = URL.createObjectURL(file);
     setNidBack(url);
@@ -77,9 +87,21 @@ const NidUploadWorker = () => {
       const formData = new FormData();
       formData.append("data", JSON.stringify(payload));
       if (nidFrontFile) {
+        const frontCheck = validateNidFile(nidFrontFile);
+        if (!frontCheck.valid) {
+          toast.error(`Front side ID: ${frontCheck.error}`);
+          setIsSubmitting(false);
+          return;
+        }
         formData.append("nidFront", nidFrontFile);
       }
       if (nidBackFile) {
+        const backCheck = validateNidFile(nidBackFile);
+        if (!backCheck.valid) {
+          toast.error(`Back side ID: ${backCheck.error}`);
+          setIsSubmitting(false);
+          return;
+        }
         formData.append("nidBack", nidBackFile);
       }
 
@@ -108,7 +130,7 @@ const NidUploadWorker = () => {
           National ID Verification
         </h2>
         <p className='text-sm text-gray-500 mt-1'>
-          Please upload clear photos or scans of both the front and back of your National ID, Driver&apos;s Licence, or Passport.
+          Please upload clear photos or scans of both the front and back of your National ID, Driver&apos;s Licence, or Passport (PNG, JPG, JPEG, or WEBP, max 5MB each).
         </p>
       </div>
 
