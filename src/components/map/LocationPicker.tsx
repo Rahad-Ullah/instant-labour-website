@@ -5,8 +5,8 @@ import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 export default function LocationPicker({ locations }: { locations: { lat: number, lng: number }[] }) {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number }>({
-    lat: 23.8041,
-    lng: 90.4152
+    lat: 51.5074,
+    lng: -0.1278
   });
 
   useEffect(() => {

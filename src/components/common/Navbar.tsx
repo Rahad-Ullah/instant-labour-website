@@ -135,15 +135,13 @@ const Navbar = ({ userData }: { userData: any }) => {
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <div className="flex items-center gap-2 cursor-pointer">
-                  <div className="w-9 h-9 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-primary">
-                    <Image
-                      src={user ? formatUrl(user?.profile) : profileImg}
-                      alt="User Profile"
-                      width={400}
-                      height={400}
-                      className="object-cover h-9 w-9 md:h-12 md:w-12"
-                    />
-                  </div>
+                  <Image
+                    src={user ? formatUrl(user?.profile) : profileImg}
+                    alt="User Profile"
+                    width={200}
+                    height={200}
+                    className="object-cover h-12 w-12 rounded-full"
+                  />
                   <p className="hidden xl:inline-block font-bold text-gray-700">
                     {user?.name}
                   </p>

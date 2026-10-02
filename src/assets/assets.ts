@@ -47,7 +47,7 @@ import about05 from "./aboutus/aboutus05.png"
 
 
 
-export { 
+export {
   defaultImage,
   brandLogo, footerLogo, profileImg, mapImg, userImg,
   contactHeroImg,
@@ -56,4 +56,4 @@ export {
   jobs01, jobs02, jobs03, jobs04, jobs05, jobs06, jobs07,
   heroWorkerImg, workerCover, worker01, worker02, worker03,
   aboutHeroImg, about01, about02, about03, about04, about05,
- };
+};
