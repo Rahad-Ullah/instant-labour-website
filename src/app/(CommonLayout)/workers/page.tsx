@@ -35,6 +35,7 @@ const Workers = async ({ searchParams }: { searchParams: { [key: string]: string
   const limit = newSearchParams?.pageSize || 10;
 
   const params = new URLSearchParams({
+    status: 'active',
     page: String(page),
     limit: String(limit),
     ...(searchTerm ? { searchTerm } : {}),
@@ -50,7 +51,7 @@ const Workers = async ({ searchParams }: { searchParams: { [key: string]: string
   const url = `/user/workers?${params.toString()}`;
   //console.log("workers url : ", url);
   const res = await myFetch(url);
-  
+
   //console.log("worker res : ", res?.data?.data);
 
   // formatting the worker data to fit the worker card props
